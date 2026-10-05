@@ -111,6 +111,14 @@ def test_tool_registry_context_roundtrip(board):
     assert result["ok"] is True
     with kbc.connect_closing() as conn:
         assert kb.list_comments(conn, tid)[0].context["attachment_ids"] == [aid]
+    result = json.loads(registry.dispatch("kanban_comment", {"task_id": tid, "body": "【返工要求｜实现审查】reviewer → builder：仅修正识别，不含部署"}))
+    assert result["ok"] is True
+    with kbc.connect_closing() as conn:
+        comment = kb.list_comments(conn, tid)[-1]
+        assert comment.context is not None
+        assert comment.context["phase"] == "实现审查"
+        assert comment.context["assignee"] == "builder"
+        assert comment.context["approval_scope"] is None
 
 
 def test_api_context_roundtrip_and_rejection(board):
@@ -129,3 +137,24 @@ def test_api_context_roundtrip_and_rejection(board):
         detail = api.get(f"/tasks/{tid}").json()
         assert detail["comments"][0]["context"]["attachment_ids"] == [aid]
         assert len(detail["comments"]) == 1
+        headers = ["请求批准", "交付审查", "审查结论", "返工要求", "阻塞求决", "收尾交付", "实现完成", "审查通过", "退回修改", "需要输入", "规划完成", "请求审查"]
+        for header in headers:
+            body = f"【{header}｜实现审查】reviewer → 用户：隔离测试，不授权部署"
+            with kbc.connect_closing() as conn:
+                old_id = conn.execute("INSERT INTO task_comments(task_id,author,body,created_at) VALUES(?,?,?,?)", (tid, "reviewer", body, 1)).lastrowid
+            for explicit in (False, True):
+                payload: dict = {"body": body}
+                if explicit:
+                    payload["context"] = {"kind": "handoff", "phase": "明确阶段", "attachment_ids": [aid]}
+                assert api.post(url, json=payload).status_code == 200
+                comments = api.get(f"/tasks/{tid}").json()["comments"]
+                assert next(c for c in comments if c["id"] == old_id)["context"] is None
+                new = comments[-1]["context"]
+                assert new is not None
+                assert new["phase"] == ("明确阶段" if explicit else "实现审查")
+                assert new["attachment_ids"] == ([aid] if explicit else [])
+                assert new["assignee"] == "builder"
+                assert new["approval_scope"] is None
+        for body in ["普通讨论", "【用户决定｜实现审查】继续", "【心跳｜实现审查】工作中", "【失败摘要｜实现审查】退出", "正文提及【审查结论｜实现审查】不是声明"]:
+            assert api.post(url, json={"body": body}).status_code == 200
+            assert api.get(f"/tasks/{tid}").json()["comments"][-1]["context"] is None

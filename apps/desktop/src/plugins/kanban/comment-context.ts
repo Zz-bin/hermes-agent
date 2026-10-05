@@ -1,6 +1,7 @@
 import type { KanbanComment, KanbanCommentContext } from './types'
 
-const formalHeader = /^【(请求批准|实现完成|审查通过|退回修改|需要输入|规划完成|请求审查)[｜|]([^】]+)】/
+const formalHeader =
+  /^【(请求批准|交付审查|审查结论|返工要求|阻塞求决|收尾交付|实现完成|审查通过|退回修改|需要输入|规划完成|请求审查)[｜|]([^】]+)】/
 
 export function handoffContext(comment: KanbanComment): KanbanCommentContext | null {
   const context = comment.context
