@@ -282,6 +282,7 @@ _SPECS = [
         _arg("text", nargs="+", help="Comment body"),
         _arg("--author", help="Author name (default: $HERMES_PROFILE or 'user')"),
         _arg("--max-len", type=int, help="Trim the stored comment body to this many characters"),
+        _arg("--context", help='Handoff JSON: {"kind":"handoff","phase":"review","attachment_ids":[1]}'),
     ], help="Append a comment"),
     _cmd("attach", [
         _TASK_ID,

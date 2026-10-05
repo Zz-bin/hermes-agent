@@ -820,12 +820,14 @@ class Comment:
     author: str
     body: str
     created_at: int
+    context: Optional[dict] = None
 
     @classmethod
     def from_row(cls, r: sqlite3.Row) -> "Comment":
         return cls(
             id=r["id"], task_id=r["task_id"], author=_lossy_text(r["author"]),
             body=_lossy_text(r["body"]), created_at=r["created_at"],
+            context=_json_or(_row_get(r, "context")),
         )
 
 
@@ -986,7 +988,8 @@ CREATE TABLE IF NOT EXISTS task_comments (
     task_id    TEXT NOT NULL,
     author     TEXT NOT NULL,
     body       TEXT NOT NULL,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    context    TEXT
 );
 
 CREATE TABLE IF NOT EXISTS task_events (
@@ -1766,7 +1769,7 @@ def task_graph_context(conn: sqlite3.Connection, task_id: str) -> dict:
 
 # --- Comments & events ---
 
-def add_comment(conn: sqlite3.Connection, task_id: str, author: str, body: str) -> int:
+def add_comment(conn: sqlite3.Connection, task_id: str, author: str, body: str, *, context: Optional[dict] = None) -> int:
     if not body or not body.strip():
         raise ValueError("comment body is required")
     if not author or not author.strip():
@@ -1776,9 +1779,12 @@ def add_comment(conn: sqlite3.Connection, task_id: str, author: str, body: str) 
     # compose comment writes under one outer commit.
     with write_txn(conn, allow_nested=True):
         _require_task(conn, task_id)
+        from hermes_cli.kanban_comment_context import capture_context
+        snapshot = capture_context(conn, get_task(conn, task_id), body, context)
         cur = conn.execute(
-            "INSERT INTO task_comments (task_id, author, body, created_at) "
-            "VALUES (?, ?, ?, ?)", (task_id, author.strip(), body.strip(), now),
+            "INSERT INTO task_comments (task_id, author, body, created_at, context) "
+            "VALUES (?, ?, ?, ?, ?)", (task_id, author.strip(), body.strip(), now,
+                                      json.dumps(snapshot, ensure_ascii=False) if snapshot else None),
         )
         _append_event(conn, task_id, "commented", {"author": author, "len": len(body)})
         return int(cur.lastrowid or 0)
@@ -1805,7 +1811,7 @@ def list_comments_after(
     """Comments with ``id > after_id`` — keyed on rowid, not ``created_at``, so a
     same-second burst is never skipped (live worker comment bridge)."""
     rows = conn.execute(
-        "SELECT id, task_id, author, body, created_at FROM task_comments "
+        "SELECT id, task_id, author, body, created_at, context FROM task_comments "
         "WHERE task_id = ? AND id > ? ORDER BY id ASC", (task_id, int(after_id)),
     ).fetchall()
     return [Comment.from_row(r) for r in rows]

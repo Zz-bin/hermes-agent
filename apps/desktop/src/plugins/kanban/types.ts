@@ -82,11 +82,26 @@ export interface KanbanRun {
   ended_at?: null | number
 }
 
+export interface KanbanCommentContext {
+  version: 1
+  kind: 'handoff'
+  phase: null | string
+  assignee: null | string
+  status: string
+  workspace_kind: string
+  workspace_path: null | string
+  attachment_ids: number[]
+  material_paths?: string[]
+  verification?: null | string
+  approval_scope?: null | string
+}
+
 export interface KanbanComment {
   id: number | string
   author: string
   body: string
   created_at: number
+  context?: KanbanCommentContext | null
 }
 
 export interface KanbanEvent {
