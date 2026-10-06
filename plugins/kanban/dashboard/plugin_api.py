@@ -785,15 +785,16 @@ def _set_status_direct(conn: sqlite3.Connection, task_id: str, new_status: str) 
 class CommentBody(BaseModel):
     body: str
     author: Optional[str] = "dashboard"
+    context: Optional[dict] = None
 
 
 @router.post("/tasks/{task_id}/comments")
 def add_comment(task_id: str, payload: CommentBody, board: Optional[str] = Query(None)):
     if not payload.body.strip():
         raise HTTPException(status_code=400, detail="body is required")
-    with _board_conn(board) as (board, conn):
+    with _board_conn(board) as (board, conn), _value_error_400():
         _require_task(conn, task_id)
-        kanban_db.add_comment(conn, task_id, author=payload.author or "dashboard", body=payload.body)
+        kanban_db.add_comment(conn, task_id, author=payload.author or "dashboard", body=payload.body, context=payload.context)
         return {"ok": True}
 
 

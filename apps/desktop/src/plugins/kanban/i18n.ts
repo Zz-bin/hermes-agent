@@ -141,6 +141,30 @@ type KanbanMessages = {
   noDescription: string
   result: string
   latestSummary: string
+  expandText: string
+  collapseText: string
+  allAuthors: string
+  authorFilter: string
+  commentOrder: string
+  newestFirst: string
+  oldestFirst: string
+  selectComment: string
+  selectedContext: string
+  latestHandoff: string
+  noHandoff: string
+  notRecorded: string
+  handoff: string
+  discussion: string
+  currentProperties: string
+  runSummarySource: string
+  commentMaterials: string
+  phase: string
+  clearCommentSelection: string
+  statusAtHandoff: string
+  reportedVerification: string
+  declaredScope: string
+  allAttachments: string
+
   dependencies: string
   blockedBy: string
   blocks: string
@@ -374,6 +398,30 @@ export const en: KanbanMessages = {
   noDescription: 'No description yet.',
   result: 'Result',
   latestSummary: 'Latest summary',
+  expandText: 'Expand',
+  collapseText: 'Collapse',
+  allAuthors: 'All authors',
+  authorFilter: 'Filter author',
+  commentOrder: 'Comment order',
+  newestFirst: 'Newest first',
+  oldestFirst: 'Oldest first',
+  selectComment: 'Select comment',
+  selectedContext: 'Selected comment',
+  latestHandoff: 'Latest handoff',
+  noHandoff: 'No formal handoff',
+  notRecorded: 'Not recorded',
+  handoff: 'Handoff',
+  discussion: 'Discussion',
+  currentProperties: 'Current task properties',
+  runSummarySource: 'Source: worker run summary',
+  commentMaterials: 'Comment materials',
+  phase: 'Phase',
+  clearCommentSelection: 'Clear selection',
+  statusAtHandoff: 'Status at handoff',
+  reportedVerification: 'Declared verification',
+  declaredScope: 'Declared scope',
+  allAttachments: 'All task attachments',
+
   dependencies: 'Dependencies',
   blockedBy: 'Blocked by',
   blocks: 'Blocks',
@@ -601,6 +649,30 @@ const ja: KanbanMessages = {
   noDescription: 'まだ説明はありません。',
   result: '結果',
   latestSummary: '最新のサマリー',
+  expandText: '展開',
+  collapseText: '折りたたむ',
+  allAuthors: 'すべての作成者',
+  authorFilter: '作成者で絞り込む',
+  commentOrder: 'コメント順序',
+  newestFirst: '新しい順',
+  oldestFirst: '古い順',
+  selectComment: 'コメントを選択',
+  selectedContext: '選択したコメント',
+  latestHandoff: '最新の引き継ぎ',
+  noHandoff: '正式な引き継ぎなし',
+  notRecorded: '未記録',
+  handoff: '引き継ぎ',
+  discussion: '会話',
+  currentProperties: '現在のタスク属性',
+  runSummarySource: '出典：実行サマリー',
+  commentMaterials: 'コメント資料',
+  phase: '段階',
+  clearCommentSelection: '選択をクリア',
+  statusAtHandoff: '引き継ぎ時の状態',
+  reportedVerification: '申告された検証',
+  declaredScope: '申告された範囲',
+  allAttachments: 'タスクの全添付ファイル',
+
   dependencies: '依存関係',
   blockedBy: 'ブロック元',
   blocks: 'ブロック先',
@@ -827,6 +899,30 @@ const zh: KanbanMessages = {
   noDescription: '暂无描述。',
   result: '结果',
   latestSummary: '最新摘要',
+  expandText: '展开全文',
+  collapseText: '收起',
+  allAuthors: '全部作者',
+  authorFilter: '筛选作者',
+  commentOrder: '评论排序',
+  newestFirst: '最新在前',
+  oldestFirst: '最早在前',
+  selectComment: '选择评论',
+  selectedContext: '选中评论',
+  latestHandoff: '最新交接',
+  noHandoff: '暂无正式交接',
+  notRecorded: '未记录',
+  handoff: '交接',
+  discussion: '讨论',
+  currentProperties: '当前任务属性',
+  runSummarySource: '来源：工作单元运行摘要',
+  commentMaterials: '评论材料',
+  phase: '阶段',
+  statusAtHandoff: '交接时状态',
+  reportedVerification: '交接验证声明',
+  declaredScope: '交接范围声明',
+  allAttachments: '卡片全部附件',
+  clearCommentSelection: '清除选择',
+
   dependencies: '依赖关系',
   blockedBy: '受阻于',
   blocks: '阻塞',
@@ -1051,6 +1147,30 @@ const zhHant: KanbanMessages = {
   noDescription: '尚無描述。',
   result: '結果',
   latestSummary: '最新摘要',
+  expandText: '展開全文',
+  collapseText: '收起',
+  allAuthors: '全部作者',
+  authorFilter: '篩選作者',
+  commentOrder: '留言排序',
+  newestFirst: '最新在前',
+  oldestFirst: '最早在前',
+  selectComment: '選擇留言',
+  selectedContext: '選中留言',
+  latestHandoff: '最新交接',
+  noHandoff: '暫無正式交接',
+  notRecorded: '未記錄',
+  handoff: '交接',
+  discussion: '討論',
+  currentProperties: '目前任務屬性',
+  runSummarySource: '來源：工作單元執行摘要',
+  commentMaterials: '留言材料',
+  phase: '階段',
+  statusAtHandoff: '交接時狀態',
+  reportedVerification: '交接驗證聲明',
+  declaredScope: '交接範圍聲明',
+  allAttachments: '卡片全部附件',
+  clearCommentSelection: '清除選擇',
+
   dependencies: '相依關係',
   blockedBy: '受阻於',
   blocks: '阻擋',

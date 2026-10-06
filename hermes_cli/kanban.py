@@ -755,8 +755,12 @@ def _cmd_comment(args: argparse.Namespace) -> int:
             suffix = f"\n\n[trimmed to {args.max_len} chars by --max-len]"
             body = body[: max(0, args.max_len - len(suffix))].rstrip() + suffix
     author = args.author or _profile_author()
+    try:
+        context = json.loads(args.context) if getattr(args, "context", None) else None
+    except ValueError as exc:
+        return _err(f"invalid comment context JSON: {exc}", 2)
     with kbc.connect_closing() as conn:
-        kb.add_comment(conn, args.task_id, author, body)
+        kb.add_comment(conn, args.task_id, author, body, context=context)
     print(f"Comment added to {args.task_id}")
     return 0
 

@@ -56,6 +56,8 @@ import {
   uploadAttachment,
   useKanbanScope
 } from './api'
+import { handoffContext, resolveCommentContext } from './comment-context'
+import { type CommentSelection, CommentThread } from './comment-thread'
 import { ModelOverrideField, overridePatch } from './model-override'
 import {
   type Diagnostic,
@@ -432,6 +434,24 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
   const k = useKanban()
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
+  const [expanded, setExpanded] = useState(false)
+  const [long, setLong] = useState(false)
+  const preview = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const element = preview.current
+
+    if (!element) {
+      return
+    }
+
+    const measure = () => setLong(element.scrollHeight > 72)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+
+    return () => observer.disconnect()
+  }, [body, editing])
 
   return (
     <Section
@@ -470,7 +490,16 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
           </Button>
         </div>
       ) : body ? (
-        <TaskMarkdown text={body} />
+        <div>
+          <div className={expanded ? '' : 'max-h-[4.5rem] overflow-hidden'} ref={preview}>
+            <TaskMarkdown text={body} />
+          </div>
+          {long && (
+            <Button aria-expanded={expanded} onClick={() => setExpanded(!expanded)} size="xs" variant="ghost">
+              {expanded ? k.collapseText : k.expandText}
+            </Button>
+          )}
+        </div>
       ) : (
         <p className="text-[0.8125rem] text-(--ui-text-quaternary)">{k.noDescription}</p>
       )}
@@ -560,7 +589,7 @@ function AttachmentsSection({
           </Button>
         </>
       }
-      label={k.attachments(attachments.length)}
+      label={`${k.allAttachments} · ${attachments.length}`}
     >
       {attachments.length > 0 ? (
         <ul className="flex flex-col gap-1">
@@ -690,6 +719,8 @@ function FeedTabs({
   log,
   onComment,
   onRequeue,
+  onSelection,
+  selection,
   running
 }: {
   commentPending: boolean
@@ -697,6 +728,8 @@ function FeedTabs({
   log: null | WorkerLog
   onComment: (body: string) => void
   onRequeue: (body: string) => void
+  onSelection: (next: CommentSelection) => void
+  selection: CommentSelection
   running: boolean
 }) {
   const k = useKanban()
@@ -728,19 +761,13 @@ function FeedTabs({
     <div className="flex flex-col gap-4">
       {tab === 'comments' && (
         <>
-          {detail.comments.length > 0 && (
-            <ul className="flex flex-col gap-3">
-              {detail.comments.map(comment => (
-                <li className="flex flex-col gap-0.5" key={comment.id}>
-                  <div className="flex items-baseline gap-2 text-[0.75rem]">
-                    <span className="font-medium text-(--ui-text-secondary)">{comment.author}</span>
-                    <span className="text-[0.625rem] text-(--ui-text-quaternary)">{ago(comment.created_at)}</span>
-                  </div>
-                  <TaskMarkdown text={comment.body} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <CommentThread
+            comments={detail.comments}
+            k={k}
+            onChange={onSelection}
+            renderBody={body => <TaskMarkdown text={body} />}
+            selection={selection}
+          />
           <CommentComposer onRequeue={onRequeue} onSubmit={onComment} pending={commentPending} running={running} />
         </>
       )}
@@ -845,6 +872,15 @@ export function TaskDrawer({
   const qc = useQueryClient()
   const scope = useKanbanScope()
   const slug = useValue($boardSlug)
+  const selectionKey = `${scope}:${slug}:${id}`
+  const emptySelection: CommentSelection = { author: '', order: 'newest', selected: null }
+  const [commentState, setCommentState] = useState({ key: selectionKey, value: emptySelection })
+  const selection = commentState.key === selectionKey ? commentState.value : emptySelection
+  const onSelection = (next: CommentSelection) => setCommentState({ key: selectionKey, value: next })
+
+  useEffect(() => {
+    setCommentState({ key: selectionKey, value: { author: '', order: 'newest', selected: null } })
+  }, [selectionKey])
 
   // Socket-invalidated (bindApi); the interval is only the socketless heartbeat.
   const { data: detail, error } = useQuery({
@@ -855,6 +891,13 @@ export function TaskDrawer({
   })
 
   const task = detail?.task
+  const contextComment = resolveCommentContext(detail?.comments ?? [], selection.selected, selection.author)
+  const snapshot = contextComment ? handoffContext(contextComment) : null
+
+  const contextAttachments = (detail?.attachments ?? []).filter(attachment =>
+    snapshot?.attachment_ids.includes(Number(attachment.id))
+  )
+
   const running = task?.status === 'running'
   const defaultAssignee = useDefaultAssignee()
 
@@ -1045,7 +1088,7 @@ export function TaskDrawer({
               <Loader type="lemniscate-bloom" />
             </div>
           ) : (
-            <div className="flex min-h-0 flex-1">
+            <div className="kanban-detail-columns flex min-h-0 flex-1">
               <div className="min-w-0 flex-1 overflow-y-auto px-5 pb-5">
                 <div className="flex flex-col gap-5">
                   {task.status === 'ready' && !task.assignee && !defaultAssignee && (
@@ -1073,6 +1116,7 @@ export function TaskDrawer({
 
                   <DescriptionSection
                     body={task.body}
+                    key={`description:${selectionKey}`}
                     onSave={body => void mutate(() => patchTask(task.id, { body }))()}
                   />
 
@@ -1084,6 +1128,7 @@ export function TaskDrawer({
 
                   {task.latest_summary && !isAdminSummary(task.latest_summary) && (
                     <Section label={k.latestSummary}>
+                      <p className="text-[0.625rem] text-(--ui-text-quaternary)">{k.runSummarySource}</p>
                       <TaskMarkdown text={task.latest_summary} />
                     </Section>
                   )}
@@ -1091,80 +1136,147 @@ export function TaskDrawer({
                   <FeedTabs
                     commentPending={commentMut.isPending || requeueMut.isPending}
                     detail={detail}
+                    key={`comments:${selectionKey}`}
                     log={log ?? null}
                     onComment={body => commentMut.mutate(body)}
                     onRequeue={body => requeueMut.mutate(body)}
+                    onSelection={onSelection}
                     running={running}
+                    selection={selection}
                   />
                 </div>
               </div>
-              <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-l border-(--ui-stroke-tertiary) px-4 pb-5">
-                <MetaRow label={k.assignee}>
-                  <AssigneeMenu
-                    current={task.assignee}
-                    onReassign={profile => void mutate(() => reassignTask(task.id, profile))()}
-                  />
-                </MetaRow>
-                {typeof task.priority === 'number' && (
-                  <MetaRow label={k.metaPriority}>
-                    <PriorityGlyph priority={task.priority} />
-                  </MetaRow>
-                )}
-                {task.tenant && <MetaRow label={k.metaTenant}>{task.tenant}</MetaRow>}
-                {/* #124391 — block detail the API already returns. The kind is
+              <aside className="kanban-detail-sidebar flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-l border-(--ui-stroke-tertiary) px-4 pb-5">
+                <Section label={selection.selected !== null ? k.selectedContext : k.latestHandoff}>
+                  {contextComment ? (
+                    <div
+                      className="flex min-w-0 flex-col gap-2 break-words"
+                      data-comment-context={String(contextComment.id)}
+                    >
+                      <p className="text-[0.6875rem] text-(--ui-text-tertiary)">
+                        {contextComment.author} · #{contextComment.id} · {ago(contextComment.created_at)}
+                      </p>
+                      <MetaRow label={k.assignee}>{snapshot?.assignee ?? k.notRecorded}</MetaRow>
+                      <MetaRow label={k.phase}>{snapshot?.phase ?? k.notRecorded}</MetaRow>
+                      <MetaRow label={k.statusAtHandoff}>
+                        {snapshot ? columnLabel(k, snapshot.status) : k.notRecorded}
+                      </MetaRow>
+                      <MetaRow label={k.workspace}>{snapshot?.workspace_path ?? k.notRecorded}</MetaRow>
+                      {snapshot?.approval_scope && (
+                        <details>
+                          <summary className="cursor-pointer text-[0.6875rem]">{k.declaredScope}</summary>
+                          <TaskMarkdown text={snapshot.approval_scope} />
+                        </details>
+                      )}
+                      {snapshot?.verification && (
+                        <details>
+                          <summary className="cursor-pointer text-[0.6875rem]">{k.reportedVerification}</summary>
+                          <TaskMarkdown text={snapshot.verification} />
+                        </details>
+                      )}
+                      <MetaRow label={k.commentMaterials}>
+                        {contextAttachments.length ? (
+                          <ul>
+                            {contextAttachments.map(attachment => (
+                              <li key={attachment.id}>
+                                <AttachmentDownload attachment={attachment} onDownload={detail.downloadAttachment} />
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>
+                            {snapshot && !snapshot.attachment_ids.length && !snapshot.material_paths?.length
+                              ? k.noAttachments
+                              : snapshot?.material_paths?.length
+                                ? null
+                                : k.notRecorded}
+                          </span>
+                        )}
+                        {snapshot?.material_paths?.map(path => (
+                          <div className="flex min-w-0 items-start gap-1" key={path}>
+                            <code className="min-w-0 break-all text-[0.6875rem]">{path}</code>
+                            <CopyButton text={path} />
+                          </div>
+                        ))}
+                      </MetaRow>
+                    </div>
+                  ) : (
+                    <p className="text-[0.75rem] text-(--ui-text-quaternary)">{k.noHandoff}</p>
+                  )}
+                </Section>
+                <details>
+                  <summary className="cursor-pointer text-[0.75rem] font-medium text-(--ui-text-secondary)">
+                    {k.currentProperties}
+                  </summary>
+                  <div className="mt-3 flex flex-col gap-4">
+                    <MetaRow label={k.assignee}>
+                      <AssigneeMenu
+                        current={task.assignee}
+                        onReassign={profile => void mutate(() => reassignTask(task.id, profile))()}
+                      />
+                    </MetaRow>
+                    {typeof task.priority === 'number' && (
+                      <MetaRow label={k.metaPriority}>
+                        <PriorityGlyph priority={task.priority} />
+                      </MetaRow>
+                    )}
+                    {task.tenant && <MetaRow label={k.metaTenant}>{task.tenant}</MetaRow>}
+                    {/* #124391 — block detail the API already returns. The kind is
                     retained across unblock, so present it as CURRENT only
                     while the card sits in the blocked column. */}
-                {task.status === 'blocked' && task.block_kind && (
-                  <MetaRow label={k.blockReason}>
-                    <Tip label={k.blockKindTip(task.block_kind)}>
-                      <span className="cursor-help text-destructive">{task.block_kind}</span>
-                    </Tip>
-                  </MetaRow>
-                )}
-                {typeof task.block_recurrences === 'number' && task.block_recurrences > 0 && (
-                  <MetaRow label={k.blockRecurrences}>
-                    <Tip label={k.blockRecurrencesTip}>
-                      <span className="cursor-help">×{task.block_recurrences}</span>
-                    </Tip>
-                  </MetaRow>
-                )}
-                {typeof task.consecutive_failures === 'number' && task.consecutive_failures > 0 && (
-                  <MetaRow label={k.consecutiveFailures}>{task.consecutive_failures}</MetaRow>
-                )}
-                {task.last_failure_error && (
-                  <MetaRow label={k.lastFailureError}>
-                    <span className="whitespace-pre-wrap font-mono text-[0.65rem] leading-snug text-(--ui-text-tertiary)">
-                      {task.last_failure_error}
-                    </span>
-                  </MetaRow>
-                )}
-                {task.workspace_path && (
-                  <MetaRow label={k.workspace}>
-                    <WorkspaceValue kind={task.workspace_kind} path={task.workspace_path} />
-                  </MetaRow>
-                )}
-                <MetaRow label={k.model}>
-                  <ModelOverrideField
-                    onChange={next => void mutate(() => patchTask(task.id, overridePatch(next)))()}
-                    value={{
-                      effort: task.reasoning_effort ?? '',
-                      model: task.model_override ?? '',
-                      provider: task.provider_override ?? ''
-                    }}
-                  />
-                </MetaRow>
-                {(detail.links.parents.length > 0 || detail.links.children.length > 0) &&
-                  (['parents', 'children'] as const).map(side =>
-                    detail.links[side].length > 0 ? (
-                      <MetaRow key={side} label={side === 'parents' ? k.blockedBy : k.blocks}>
-                        <LinkChips ids={detail.links[side]} linkTitles={linkTitles} onOpen={onOpen} />
+                    {task.status === 'blocked' && task.block_kind && (
+                      <MetaRow label={k.blockReason}>
+                        <Tip label={k.blockKindTip(task.block_kind)}>
+                          <span className="cursor-help text-destructive">{task.block_kind}</span>
+                        </Tip>
                       </MetaRow>
-                    ) : null
-                  )}
-                {task.created_by && <MetaRow label={k.metaCreatedBy}>{task.created_by}</MetaRow>}
-                {ago(task.created_at) && <MetaRow label={k.metaCreated}>{ago(task.created_at)}</MetaRow>}
-                {running && task.worker_pid ? <MetaRow label={k.metaWorkerPid}>{task.worker_pid}</MetaRow> : null}
-                <EstimateSection id={task.id} />
+                    )}
+                    {typeof task.block_recurrences === 'number' && task.block_recurrences > 0 && (
+                      <MetaRow label={k.blockRecurrences}>
+                        <Tip label={k.blockRecurrencesTip}>
+                          <span className="cursor-help">×{task.block_recurrences}</span>
+                        </Tip>
+                      </MetaRow>
+                    )}
+                    {typeof task.consecutive_failures === 'number' && task.consecutive_failures > 0 && (
+                      <MetaRow label={k.consecutiveFailures}>{task.consecutive_failures}</MetaRow>
+                    )}
+                    {task.last_failure_error && (
+                      <MetaRow label={k.lastFailureError}>
+                        <span className="whitespace-pre-wrap font-mono text-[0.65rem] leading-snug text-(--ui-text-tertiary)">
+                          {task.last_failure_error}
+                        </span>
+                      </MetaRow>
+                    )}
+                    {task.workspace_path && (
+                      <MetaRow label={k.workspace}>
+                        <WorkspaceValue kind={task.workspace_kind} path={task.workspace_path} />
+                      </MetaRow>
+                    )}
+                    <MetaRow label={k.model}>
+                      <ModelOverrideField
+                        onChange={next => void mutate(() => patchTask(task.id, overridePatch(next)))()}
+                        value={{
+                          effort: task.reasoning_effort ?? '',
+                          model: task.model_override ?? '',
+                          provider: task.provider_override ?? ''
+                        }}
+                      />
+                    </MetaRow>
+                    {(detail.links.parents.length > 0 || detail.links.children.length > 0) &&
+                      (['parents', 'children'] as const).map(side =>
+                        detail.links[side].length > 0 ? (
+                          <MetaRow key={side} label={side === 'parents' ? k.blockedBy : k.blocks}>
+                            <LinkChips ids={detail.links[side]} linkTitles={linkTitles} onOpen={onOpen} />
+                          </MetaRow>
+                        ) : null
+                      )}
+                    {task.created_by && <MetaRow label={k.metaCreatedBy}>{task.created_by}</MetaRow>}
+                    {ago(task.created_at) && <MetaRow label={k.metaCreated}>{ago(task.created_at)}</MetaRow>}
+                    {running && task.worker_pid ? <MetaRow label={k.metaWorkerPid}>{task.worker_pid}</MetaRow> : null}
+                    <EstimateSection id={task.id} />
+                  </div>
+                </details>
 
                 {Array.isArray(detail.attachments) && (
                   <AttachmentsSection

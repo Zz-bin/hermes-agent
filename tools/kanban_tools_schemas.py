@@ -323,6 +323,20 @@ KANBAN_COMMENT_SCHEMA = _schema(
                 "another's — comment threads are per-task)."
         )),
         "body": _prop("string", "Markdown-supported comment body."),
+        "context": {
+            "type": "object",
+            "description": "Optional formal handoff declaration; server captures the task snapshot. Explicitly associate this task's attachment ids. Omit for ordinary discussion.",
+            "properties": {
+                "kind": {"type": "string", "enum": ["handoff"]},
+                "phase": {"type": "string", "maxLength": 120},
+                "verification": {"type": "string", "maxLength": 10000, "description": "Verbatim verification declaration, not independently verified by the server."},
+                "approval_scope": {"type": "string", "maxLength": 10000, "description": "Verbatim handoff scope; not an execution permission grant."},
+                "material_paths": {"type": "array", "maxItems": 100, "items": {"type": "string", "minLength": 1, "maxLength": 2048}, "description": "Explicit material file paths, displayed as copyable text (not opened automatically)."},
+                "attachment_ids": {"type": "array", "maxItems": 100, "items": {"type": "integer", "minimum": 1}},
+            },
+            "required": ["kind"],
+            "additionalProperties": False,
+        },
     },
     ["task_id", "body"],
 )
