@@ -106,3 +106,31 @@ better), then register it in `scenarios/index.mjs`. If it's `ci`, add a
 `eval.mjs`, `reload.mjs`, `reload-renderer.mjs`, `probe-renderer.mjs`,
 `probe-thread.mjs`, `click-session.mjs`, `diag-*.mjs` are interactive dev
 helpers, not benchmarks. They can adopt `lib/cdp.mjs` in a follow-up.
+
+## Kanban CPU peaks on an installed desktop (Linux)
+
+Attach to a loopback CDP port on the real desktop, open the board containing the
+selected task, then run:
+
+```bash
+node scripts/perf/kanban-peak.mjs --port 9222 --task-title "Task title" --task-id t_example --require-hardware true --interactions true --json /tmp/kanban-peaks.json
+```
+
+This separate acceptance entry records every round, including raw 25ms CPU
+samples from an independent worker, all descendant processes, CDP GPU identity,
+and 100/250/1000ms maximum windows. It does not use the generic runner's median
+aggregation. Five opens are required; the optional interaction pass adds
+expansion, scrolling, floor navigation, and 35 seconds idle covering polling.
+It changes presentation state and does not write task data. Use a task with a
+long description, long comments, and at least two authors for this pass.
+The first round means first open in this run, not a guarantee of empty caches.
+For startup acceptance, launch the installed app fresh before attaching.
+
+The gate fixes limits in the script: tree single-core-equivalent CPU peaks
+300%/200%/100% at 100/250/1000ms; idle 1000ms at 10%; long tasks at 100ms;
+first-open presentation at 500ms, later opens at 250ms. 100% means one core;
+reports also show machine-normalized percentages with the logical CPU count.
+Presentation timing is click through two animation frames after content mounts,
+not a hardware display timestamp. Root exit, sampling gaps above 50ms, stretched
+windows, or known CPU coverage loss invalidate the evidence rather than passing.
+Profilers and render counters must run separately from acceptance measurements.

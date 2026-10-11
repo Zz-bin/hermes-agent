@@ -346,6 +346,7 @@ import {
 import { notifyLauncherWindowRevealed } from './linux-launcher-ready'
 import {
   decideNvidiaEglFallback,
+  nvidiaEglBuildIdentity,
   nvidiaEglFallbackMarker,
   nvidiaEglMarkerAfterSuccessfulBoot,
   parseNvidiaDriverMajor,
@@ -853,6 +854,7 @@ const NVIDIA_PROC_VERSION = (() => {
 
 const NVIDIA_DRIVER_MAJOR = parseNvidiaDriverMajor(NVIDIA_PROC_VERSION)
 const NVIDIA_DRIVER_VERSION = parseNvidiaDriverVersion(NVIDIA_PROC_VERSION)
+const NVIDIA_EGL_BUILD_IDENTITY = nvidiaEglBuildIdentity(app.getVersion(), INSTALL_STAMP)
 
 let nvidiaEglFallbackActive = false
 let nvidiaEglRelaunchAttempted = false
@@ -861,7 +863,7 @@ const NVIDIA_EGL_FALLBACK = decideNvidiaEglFallback({
   driverMajor: NVIDIA_DRIVER_MAJOR,
   driverVersion: NVIDIA_DRIVER_VERSION,
   marker: readNvidiaEglMarker(app.getPath('userData')),
-  appVersion: app.getVersion(),
+  appVersion: NVIDIA_EGL_BUILD_IDENTITY,
   env: process.env,
   platform: process.platform,
   isWsl: IS_WSL,
@@ -913,7 +915,7 @@ if (NVIDIA_DRIVER_MAJOR !== null && process.platform === 'linux') {
     try {
       writeNvidiaEglMarker(
         app.getPath('userData'),
-        nvidiaEglFallbackMarker(app.getVersion(), NVIDIA_DRIVER_VERSION ?? String(NVIDIA_DRIVER_MAJOR))
+        nvidiaEglFallbackMarker(NVIDIA_EGL_BUILD_IDENTITY, NVIDIA_DRIVER_VERSION ?? String(NVIDIA_DRIVER_MAJOR))
       )
     } catch {
       void 0
@@ -15235,7 +15237,7 @@ function createWindow() {
             app.getPath('userData'),
             nvidiaEglMarkerAfterSuccessfulBoot({
               fallbackActive: nvidiaEglFallbackActive,
-              appVersion: app.getVersion(),
+              appVersion: NVIDIA_EGL_BUILD_IDENTITY,
               driverVersion: NVIDIA_DRIVER_VERSION
             })
           )

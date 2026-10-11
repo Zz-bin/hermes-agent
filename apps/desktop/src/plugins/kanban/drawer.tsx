@@ -851,6 +851,7 @@ export function TaskDrawer({
         aria-describedby={undefined}
         bodyClassName="flex max-h-[min(84vh,54rem)] flex-col gap-0 overflow-hidden p-0"
         className="w-[min(62rem,94vw)] max-w-none"
+        data-kanban-task-id={task?.id}
         showCloseButton={false}
       >
         <header className="flex flex-col gap-2 px-5 pt-4 pb-3">

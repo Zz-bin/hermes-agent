@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   decideNvidiaEglFallback,
   NVIDIA_GPU_DEATH_REASONS,
+  nvidiaEglBuildIdentity,
   nvidiaEglFallbackMarker,
   nvidiaEglMarkerAfterSuccessfulBoot,
   parseNvidiaDriverMajor,
@@ -58,6 +59,48 @@ describe('parseNvidiaDriverMajor / parseNvidiaDriverVersion', () => {
 // ANGLE through SwiftShader.
 
 describe('decideNvidiaEglFallback — behavioral probe', () => {
+  it('re-probes an updated local build while retaining a witnessed death for the same artifact', () => {
+    const stamp = { commit: 'a'.repeat(40), source: 'local' as const, dirty: false, builtAt: 'first-build' }
+    const first = nvidiaEglBuildIdentity('0.0.0', stamp)
+    const rebuilt = nvidiaEglBuildIdentity('0.0.0', { ...stamp, builtAt: 'repack' })
+    const updated = nvidiaEglBuildIdentity('0.0.0', { ...stamp, commit: 'b'.repeat(40) })
+
+    expect(rebuilt).toBe(first)
+    expect(updated).not.toBe(first)
+
+    for (const previous of ['0.0.0', first]) {
+      expect(
+        decideNvidiaEglFallback({
+          ...PROBE,
+          appVersion: updated,
+          marker: nvidiaEglFallbackMarker(previous, PROBE.driverVersion)
+        }).enable
+      ).toBe(false)
+    }
+
+    const death = nvidiaEglFallbackMarker(updated, PROBE.driverVersion)
+    expect(decideNvidiaEglFallback({ ...PROBE, appVersion: updated, marker: death }).enable).toBe(true)
+    expect(nvidiaEglBuildIdentity('0.0.0', { ...stamp, source: 'fallback' })).toBe('0.0.0')
+    expect(nvidiaEglBuildIdentity('0.0.0', { ...stamp, commit: '0'.repeat(40) })).toBe('0.0.0')
+  })
+
+  it('attributes interrupted boot probes to their artifact and retains legacy crash protection', () => {
+    const dirty = { commit: 'a'.repeat(40), source: 'local' as const, dirty: true, builtAt: 'first-build' }
+    const first = nvidiaEglBuildIdentity('0.0.0', dirty)
+    const updated = nvidiaEglBuildIdentity('0.0.0', { ...dirty, builtAt: 'second-build' })
+    expect(updated).not.toBe(first)
+    expect(nvidiaEglBuildIdentity('0.0.0', { ...dirty })).toBe(first)
+    const probe = decideNvidiaEglFallback({ ...PROBE, appVersion: first })
+    expect(probe.nextMarker).toMatchObject({ state: 'booting', version: first, driverVersion: PROBE.driverVersion })
+    expect(decideNvidiaEglFallback({ ...PROBE, appVersion: first, marker: probe.nextMarker }).enable).toBe(true)
+    expect(decideNvidiaEglFallback({ ...PROBE, appVersion: updated, marker: probe.nextMarker }).enable).toBe(false)
+    expect(
+      decideNvidiaEglFallback({ ...PROBE, appVersion: first, driverVersion: 'new-driver', marker: probe.nextMarker })
+        .enable
+    ).toBe(false)
+    expect(decideNvidiaEglFallback({ ...PROBE, appVersion: updated, marker: { state: 'booting' } }).enable).toBe(true)
+  })
+
   it('boots with hardware GL on a first launch (no marker): the 580 series is probed, not assumed broken', () => {
     const decision = decideNvidiaEglFallback(PROBE)
 

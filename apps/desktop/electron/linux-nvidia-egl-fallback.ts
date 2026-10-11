@@ -43,6 +43,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import type { InstallStamp } from './install-stamp'
+
 const OVERRIDE_ON = new Set(['1', 'true', 'yes', 'on'])
 const OVERRIDE_OFF = new Set(['0', 'false', 'no', 'off'])
 
@@ -59,10 +61,29 @@ export type NvidiaEglMarkerState = 'booting' | 'fallback' | 'ok'
 
 export interface NvidiaEglMarker {
   state: NvidiaEglMarkerState
-  /** App version that entered fallback — a version change triggers a re-probe. */
+  /** Artifact identity that entered the probe — an update triggers a re-probe. */
   version?: string
   /** Full driver version (e.g. "580.178.04") the fallback was witnessed on. */
   driverVersion?: string
+}
+
+/** Local builds share package version 0.0.0; the baked artifact owns identity. */
+export function nvidiaEglBuildIdentity(
+  appVersion: string,
+  stamp: Pick<InstallStamp, 'commit' | 'source' | 'dirty' | 'builtAt'> | null
+): string {
+  if (
+    stamp?.source === 'fallback' ||
+    !stamp?.commit ||
+    !/^[a-f\d]{40}$/i.test(stamp.commit) ||
+    /^0+$/.test(stamp.commit)
+  ) {
+    return appVersion
+  }
+
+  const dirty = stamp.dirty ? `.dirty${stamp.builtAt ? `.${stamp.builtAt}` : ''}` : ''
+
+  return `${appVersion}+${stamp.commit}${dirty}`
 }
 
 export function nvidiaEglMarkerPath(userDataDir: string): string {
@@ -172,8 +193,8 @@ export interface NvidiaEglFallbackDecision {
  * - `fallback` marker for a different app or driver version → re-probe once:
  *   boot with hardware GL, write `booting`.
  * - `booting` marker left behind by a launch that died before it could mark
- *   `ok` (the "GPU process isn't usable" FATAL abort) → enable; the previous
- *   boot witnessed a GPU death by not surviving.
+ *   `ok` (the "GPU process isn't usable" FATAL abort) → enable for the same
+ *   artifact and driver; legacy markers without identity remain conservative.
  * - `ok` or no marker → boot with hardware GL, write `booting` so a death
  *   mid-boot is attributable.
  *
@@ -199,7 +220,11 @@ export function decideNvidiaEglFallback(options: {
   const appVersion = options.appVersion ?? ''
   const marker = options.marker ?? null
 
-  const bootMarker: NvidiaEglMarker = { state: 'booting' }
+  const bootMarker: NvidiaEglMarker = {
+    state: 'booting',
+    ...(appVersion ? { version: appVersion } : {}),
+    ...(driverVersion ? { driverVersion } : {})
+  }
 
   const nvidiaOverride = String(env.HERMES_DESKTOP_NVIDIA_SWIFTSHADER || '')
     .trim()
@@ -255,8 +280,13 @@ export function decideNvidiaEglFallback(options: {
   // A booting marker that never resolved: the previous launch died before it
   // could mark a healthy boot — on this driver that means the GPU process
   // took the app down (the "GPU process isn't usable" FATAL abort wins the
-  // race against our relaunch handler). Trust it and engage.
-  if (marker?.state === 'booting') {
+  // race against our relaunch handler). A different artifact or driver earns
+  // a fresh probe; legacy markers cannot disprove the witnessed failure.
+  if (
+    marker?.state === 'booting' &&
+    (!marker.version || !appVersion || marker.version === appVersion) &&
+    (!marker.driverVersion || !driverVersion || marker.driverVersion === driverVersion)
+  ) {
     return {
       enable: true,
       reason: 'previous launch aborted mid-boot with the GPU probe live',
