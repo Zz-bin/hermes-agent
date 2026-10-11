@@ -120,7 +120,10 @@ it('bounds folded Markdown work and defers unseen discussions while preserving t
   const first = container.querySelector<HTMLElement>('[data-comment-id="1"]')!
   const unseen = container.querySelector<HTMLElement>('[data-comment-id="4"]')!
   expect(first.querySelector('p')?.textContent.length).toBeLessThan(body.length)
-  expect(body.startsWith(first.querySelector('p')!.textContent!)).toBe(true)
+  expect(body.replace(/\s+/g, ' ').startsWith(first.querySelector('p')!.textContent!)).toBe(true)
+  expect(first.querySelector('p')!.textContent).toMatch(/\S$/)
+  expect(first.querySelector('p')!.textContent).not.toMatch(/\s{2,}/)
+  expect(first.querySelector('button[aria-expanded]')!.closest('[inert]')).toBeNull()
   expect(unseen.querySelector('p')).toBeNull()
   expect(renderBody).not.toHaveBeenCalledWith(body)
 

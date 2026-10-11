@@ -178,7 +178,7 @@ export function CommentThread({
           {shown.map((comment, index) => {
             const id = String(comment.id)
             const selected = id === selection.selected
-            const long = comment.body.length > 360 || comment.body.split('\n').length > 6
+            const long = comment.body.trim().length > 360 || comment.body.trim().split('\n').length > 6
             const open = !long || expanded.has(id)
 
             // Keep initial reading immediate; defer the rest until it approaches the scroller.
@@ -222,34 +222,39 @@ export function CommentThread({
                   <span className="text-[0.625rem] text-(--ui-text-quaternary)">{ago(comment.created_at)}</span>
                 </Button>
                 <div
-                  className={`w-full break-words [&_.aui-md>:first-child]:mt-0 [&_.aui-md>:last-child]:mb-0 ${open ? '' : 'max-h-[4.5rem] overflow-hidden'}`}
-                  inert={!open || undefined}
+                  className={`w-full break-words [&_.aui-md>:first-child]:mt-0 [&_.aui-md>:last-child]:mb-0 ${open ? 'kanban-text-expanded' : 'kanban-text-folded'}`}
                 >
-                  {render ? (
-                    renderBody(open ? comment.body : textPreview(comment.body))
-                  ) : (
-                    <div aria-hidden="true" className="h-[4.5rem]" />
+                  <div className="kanban-text-body" inert={!open || undefined}>
+                    {render ? (
+                      renderBody(open ? comment.body : textPreview(comment.body))
+                    ) : (
+                      <div aria-hidden="true" className="h-[4.5rem]" />
+                    )}
+                  </div>
+                  {long && (
+                    <>
+                      {' '}
+                      {!open && '…'}
+                      <TextDisclosure
+                        expanded={open}
+                        k={k}
+                        onClick={() =>
+                          setExpanded(previous => {
+                            const next = new Set(previous)
+
+                            if (next.has(id)) {
+                              next.delete(id)
+                            } else {
+                              next.add(id)
+                            }
+
+                            return next
+                          })
+                        }
+                      />
+                    </>
                   )}
                 </div>
-                {long && (
-                  <TextDisclosure
-                    expanded={open}
-                    k={k}
-                    onClick={() =>
-                      setExpanded(previous => {
-                        const next = new Set(previous)
-
-                        if (next.has(id)) {
-                          next.delete(id)
-                        } else {
-                          next.add(id)
-                        }
-
-                        return next
-                      })
-                    }
-                  />
-                )}
               </li>
             )
           })}

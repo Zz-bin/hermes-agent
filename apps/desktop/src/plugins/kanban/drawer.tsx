@@ -326,23 +326,7 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [expanded, setExpanded] = useState(false)
-  const [long, setLong] = useState(false)
-  const preview = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const element = preview.current
-
-    if (!element) {
-      return
-    }
-
-    const measure = () => setLong(textPreview(body ?? '') !== body || element.scrollHeight > 72)
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(element)
-
-    return () => observer.disconnect()
-  }, [body, editing])
+  const long = (body ?? '').trim().length > 360 || (body ?? '').trim().split('\n').length > 6
 
   return (
     <Section
@@ -381,11 +365,16 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
           </Button>
         </div>
       ) : body ? (
-        <div className="flex flex-col items-start gap-2">
-          <div className={`w-full ${expanded ? '' : 'max-h-[4.5rem] overflow-hidden'}`} ref={preview}>
-            <TaskMarkdown text={expanded ? body : textPreview(body)} />
+        <div className={expanded || !long ? 'kanban-text-expanded' : 'kanban-text-folded'}>
+          <div className="kanban-text-body">
+            <TaskMarkdown text={expanded || !long ? body : textPreview(body)} />
           </div>
-          {long && <TextDisclosure expanded={expanded} k={k} onClick={() => setExpanded(!expanded)} />}
+          {long && (
+            <>
+              {!expanded && '…'}
+              <TextDisclosure expanded={expanded} k={k} onClick={() => setExpanded(!expanded)} />
+            </>
+          )}
         </div>
       ) : (
         <p className="text-[0.8125rem] text-(--ui-text-quaternary)">{k.noDescription}</p>
@@ -610,8 +599,11 @@ function FeedTabs({
   })
 
   const counts = detail.feed_counts
-  const events = feed?.events ?? []
-  const runs = feed?.runs ?? []
+  const events = [...(feed?.events ?? [])].sort((a, b) => b.created_at - a.created_at || b.id - a.id)
+
+  const runs = [...(feed?.runs ?? [])].sort(
+    (a, b) => (b.started_at ?? 0) - (a.started_at ?? 0) || Number(b.id) - Number(a.id)
+  )
 
   const tabs = [
     { id: 'comments' as const, label: k.comments(counts?.comments ?? detail.comments.length) },
@@ -994,7 +986,6 @@ export function TaskDrawer({
 
                       {task.latest_summary && !isAdminSummary(task.latest_summary) && (
                         <Section label={k.latestSummary}>
-                          <p className="text-[0.625rem] text-(--ui-text-quaternary)">{k.runSummarySource}</p>
                           <TaskMarkdown text={task.latest_summary} />
                         </Section>
                       )}

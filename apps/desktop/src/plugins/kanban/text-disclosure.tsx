@@ -10,9 +10,9 @@ interface TextDisclosureProps {
 
 export function TextDisclosure({ expanded, k, onClick }: TextDisclosureProps) {
   return (
-    <Button aria-expanded={expanded} onClick={onClick} size="inline" variant="ghost">
-      <Codicon name={expanded ? 'chevron-up' : 'chevron-down'} />
+    <Button aria-expanded={expanded} className="kanban-text-disclosure" onClick={onClick} size="inline" variant="text">
       {expanded ? k.collapseText : k.expandText}
+      <Codicon name={expanded ? 'chevron-up' : 'chevron-down'} />
     </Button>
   )
 }

@@ -56,7 +56,10 @@
   overflow-y: auto;
 }
 .kanban-feed-content {
-  font-size: 0.875rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--ui-bg-quaternary);
+  font-size: 0.8125rem;
   line-height: 1.6;
 }
 .kanban-feed-row {
@@ -64,7 +67,24 @@
   contain-intrinsic-size: auto 4rem;
 }
 .kanban-log {
-  font-size: inherit;
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--ui-text-tertiary);
+}
+.kanban-text-folded .kanban-text-body,
+.kanban-text-folded .kanban-text-body :is(div, p, h1, h2, h3, h4, h5, h6, pre, ul, ol, li, blockquote) {
+  display: inline;
+}
+.kanban-text-disclosure {
+  color: var(--ui-accent);
+  vertical-align: baseline;
+}
+.kanban-text-expanded > .kanban-text-disclosure {
+  display: flex;
+  width: fit-content;
+  margin-top: 0.5rem;
+  margin-left: auto;
 }
 
 .kanban-floor-directory {

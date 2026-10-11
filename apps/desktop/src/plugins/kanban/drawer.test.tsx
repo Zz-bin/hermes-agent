@@ -483,3 +483,35 @@ describe('blocked task detail', () => {
     )
   })
 })
+
+it('shows newest activity and runs first without mutating the returned feed', async () => {
+  const events = [
+    { id: 1, kind: 'created', payload: {}, created_at: 10 },
+    { id: 3, kind: 'completed', payload: {}, created_at: 20 },
+    { id: 2, kind: 'worker_started', payload: {}, created_at: 20 }
+  ]
+
+  const runs = [
+    { id: 1, status: 'done', summary: 'Old run', started_at: 10 },
+    { id: 3, status: 'done', summary: 'Newest run', started_at: 20 },
+    { id: 2, status: 'done', summary: 'Middle run', started_at: 20 }
+  ]
+
+  detail = { ...legacyDetail, events, runs }
+  const { baseElement } = openDrawer()
+  fireEvent.click(await screen.findByRole('button', { name: en.activity(3) }))
+  await waitFor(() => expect(baseElement.querySelectorAll('[data-kanban-feed="activity"] li')).toHaveLength(3))
+  const activity = [...baseElement.querySelectorAll('[data-kanban-feed="activity"] li')].map(row => row.textContent)
+  expect(activity[0]).toContain(en.evtCompleted)
+  expect(activity[1]).toContain(en.evtWorkerStarted)
+  expect(activity[2]).toContain('created')
+  fireEvent.click(screen.getByRole('button', { name: en.runs(3) }))
+  await screen.findByText('Newest run')
+  expect([...baseElement.querySelectorAll('[data-kanban-feed="runs"] li p')].map(row => row.textContent)).toEqual([
+    'Newest run',
+    'Middle run',
+    'Old run'
+  ])
+  expect(events.map(event => event.id)).toEqual([1, 3, 2])
+  expect(runs.map(run => run.id)).toEqual([1, 3, 2])
+})

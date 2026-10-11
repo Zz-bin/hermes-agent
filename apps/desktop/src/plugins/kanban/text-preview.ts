@@ -1,15 +1,4 @@
-/** Folded text needs only enough Markdown to fill the three-line preview. */
+/** Folded previews end on visible text and leave room for the inline action. */
 export function textPreview(text: string): string {
-  const prefix = text.slice(0, 1200)
-  let end = -1
-
-  for (let line = 0; line < 8; line++) {
-    end = prefix.indexOf('\n', end + 1)
-
-    if (end === -1) {
-      return prefix
-    }
-  }
-
-  return prefix.slice(0, end)
+  return text.trim().replace(/\s+/g, ' ').slice(0, 360).trimEnd()
 }
