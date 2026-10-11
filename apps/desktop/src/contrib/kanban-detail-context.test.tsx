@@ -142,14 +142,26 @@ function context() {
 }
 
 describe('native TaskDrawer comment inspection', () => {
-  it('defaults to latest handoff and changes real sidebar on selection and clearing', async () => {
+  it('groups task properties and follows the latest or selected comment', async () => {
     mount()
     await screen.findByText('Task A')
-    await waitFor(() => expect(context().dataset.commentContext).toBe('2'))
-    expect(within(context()).getByText('review-owner')).toBeTruthy()
+    await waitFor(() => expect(context().dataset.commentContext).toBe('3'))
+    expect(within(context()).getAllByText(en.notRecorded).length).toBeGreaterThan(0)
+    const sections = globalThis.document.querySelectorAll('.kanban-detail-sidebar > details')
+    expect(sections).toHaveLength(2)
+    const [properties, comment] = Array.from(sections) as HTMLDetailsElement[]
+    expect(properties.open).toBe(true)
+    expect(comment.open).toBe(true)
+    expect(within(properties).getByText(en.currentProperties)).toBeTruthy()
+    expect(within(properties).getByText('first.svg')).toBeTruthy()
+    expect(within(properties).getByText('second.svg')).toBeTruthy()
+    expect(within(comment).getByText(en.commentOverview)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Select comment #1 builder' }))
     expect(context().dataset.commentContext).toBe('1')
     expect(within(context()).getByText('old-owner')).toBeTruthy()
+    expect(within(context()).queryByText(en.phase)).toBeNull()
+    expect(within(context()).queryByText(en.statusAtHandoff)).toBeNull()
+    expect(within(context()).queryByText(en.workspace)).toBeNull()
     expect(within(context()).getByText('/worktree/design.md')).toBeTruthy()
     expect(within(context()).queryByText(en.reportedVerification)).toBeNull()
     expect(within(context()).queryByText(en.declaredScope)).toBeNull()
@@ -161,7 +173,7 @@ describe('native TaskDrawer comment inspection', () => {
     fireEvent.click(within(context()).getByRole('button', { name: 'Download first.svg' }))
     await waitFor(() => expect(mocks.download).toHaveBeenCalledWith('/test/first.svg', 'first.svg'))
     fireEvent.click(screen.getByRole('button', { name: en.clearCommentSelection }))
-    expect(context().dataset.commentContext).toBe('2')
+    expect(context().dataset.commentContext).toBe('3')
   })
   it('discussion exposes missing history, never the current owner', async () => {
     mount()
@@ -176,10 +188,10 @@ describe('native TaskDrawer comment inspection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Select comment #1 builder' }))
     view.change('B')
     await screen.findByText('Task B')
-    expect(context().dataset.commentContext).toBe('2')
+    expect(context().dataset.commentContext).toBe('3')
     view.change('A')
     await screen.findByText('Task A')
-    expect(context().dataset.commentContext).toBe('2')
+    expect(context().dataset.commentContext).toBe('3')
   })
   it('edits the complete description while collapsed and never rewrites it on cancel', async () => {
     mount()

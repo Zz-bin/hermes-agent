@@ -73,5 +73,5 @@ export function resolveCommentContext(
       ? null
       : comments.find(comment => String(comment.id) === selected && (!author || comment.author === author))
 
-  return explicit ?? visibleComments(comments, '', 'newest').find(isHandoff) ?? null
+  return explicit ?? visibleComments(comments, '', 'newest')[0] ?? null
 }

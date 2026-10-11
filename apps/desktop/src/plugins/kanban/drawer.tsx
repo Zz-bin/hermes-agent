@@ -33,7 +33,7 @@ import {
   useQueryClient,
   useValue
 } from '@hermes/plugin-sdk'
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 
 import {
   $boardSlug,
@@ -55,7 +55,7 @@ import {
 import { AssigneeMenu as CurrentAssigneeMenu } from './assignee-menu'
 import { Attachment } from './attachment'
 import { CommentComposer as FixedCommentComposer } from './comment-composer'
-import { commentFloors, handoffContext, resolveCommentContext } from './comment-context'
+import { handoffContext, resolveCommentContext } from './comment-context'
 import { CommentMarkdown } from './comment-markdown'
 import { type CommentSelection, CommentThread } from './comment-thread'
 import { ModelOverrideField, overridePatch } from './model-override'
@@ -202,6 +202,15 @@ function TaskMarkdown({ text }: { text: string }) {
 // Sidebar property row: a Section (so every sidebar label — these, Estimate,
 // Attachments — shares FIELD_LABEL and one rhythm) whose value slot holds the
 // inline editors. Values wrap anywhere so a long path never clips at the edge.
+function SidebarSection({ children, label }: { children: ReactNode; label: string }) {
+  return (
+    <details className="kanban-sidebar-section" open>
+      <summary className="cursor-pointer text-[0.75rem] font-medium text-(--ui-text-secondary)">{label}</summary>
+      <div className="mt-3 flex min-w-0 flex-col gap-4">{children}</div>
+    </details>
+  )
+}
+
 function MetaRow({ children, label }: { children: ReactNode; label: string }) {
   return (
     <Section label={label}>
@@ -753,7 +762,6 @@ export function TaskDrawer({
     refetchInterval: 30_000
   })
 
-  const floors = useMemo(() => commentFloors(detail?.comments ?? []), [detail?.comments])
   const [pane, setPane] = useState<'discussion' | 'materials'>('discussion')
   const task = detail?.task
   const contextComment = resolveCommentContext(detail?.comments ?? [], selection.selected, selection.author)
@@ -1012,27 +1020,90 @@ export function TaskDrawer({
                   </div>
                 </div>
                 <aside className="kanban-detail-sidebar flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-l border-(--ui-stroke-tertiary) px-4 pb-5">
-                  <Section label={selection.selected !== null ? k.selectedContext : k.latestHandoff}>
+                  <SidebarSection label={k.currentProperties}>
+                    {typeof task.priority === 'number' && (
+                      <MetaRow label={k.metaPriority}>
+                        <PriorityGlyph priority={task.priority} />
+                      </MetaRow>
+                    )}
+                    {task.tenant && <MetaRow label={k.metaTenant}>{task.tenant}</MetaRow>}
+                    {/* #124391 — block detail the API already returns. The kind is
+                    retained across unblock, so present it as CURRENT only
+                    while the card sits in the blocked column. */}
+                    {task.status === 'blocked' && task.block_kind && (
+                      <MetaRow label={k.blockReason}>
+                        <Tip label={k.blockKindTip(task.block_kind)}>
+                          <span className="cursor-help text-destructive">{task.block_kind}</span>
+                        </Tip>
+                      </MetaRow>
+                    )}
+                    {typeof task.block_recurrences === 'number' && task.block_recurrences > 0 && (
+                      <MetaRow label={k.blockRecurrences}>
+                        <Tip label={k.blockRecurrencesTip}>
+                          <span className="cursor-help">×{task.block_recurrences}</span>
+                        </Tip>
+                      </MetaRow>
+                    )}
+                    {typeof task.consecutive_failures === 'number' && task.consecutive_failures > 0 && (
+                      <MetaRow label={k.consecutiveFailures}>{task.consecutive_failures}</MetaRow>
+                    )}
+                    {task.last_failure_error && (
+                      <MetaRow label={k.lastFailureError}>
+                        <span className="whitespace-pre-wrap font-mono text-[0.65rem] leading-snug text-(--ui-text-tertiary)">
+                          {task.last_failure_error}
+                        </span>
+                      </MetaRow>
+                    )}
+                    {task.workspace_path && (
+                      <MetaRow label={k.workspace}>
+                        <WorkspaceValue kind={task.workspace_kind} path={task.workspace_path} />
+                      </MetaRow>
+                    )}
+                    <MetaRow label={k.model}>
+                      <ModelOverrideField
+                        onChange={next => void mutate(() => patchTask(task.id, overridePatch(next)))()}
+                        value={{
+                          effort: task.reasoning_effort ?? '',
+                          model: task.model_override ?? '',
+                          provider: task.provider_override ?? ''
+                        }}
+                      />
+                    </MetaRow>
+                    {(detail.links.parents.length > 0 || detail.links.children.length > 0) &&
+                      (['parents', 'children'] as const).map(side =>
+                        detail.links[side].length > 0 ? (
+                          <MetaRow key={side} label={side === 'parents' ? k.blockedBy : k.blocks}>
+                            <LinkChips ids={detail.links[side]} linkTitles={linkTitles} onOpen={onOpen} />
+                          </MetaRow>
+                        ) : null
+                      )}
+                    {task.created_by && <MetaRow label={k.metaCreatedBy}>{task.created_by}</MetaRow>}
+                    {ago(task.created_at) && <MetaRow label={k.metaCreated}>{ago(task.created_at)}</MetaRow>}
+                    {running && task.worker_pid ? <MetaRow label={k.metaWorkerPid}>{task.worker_pid}</MetaRow> : null}
+                    <EstimateSection id={task.id} />
+
+                    {Array.isArray(detail.attachments) && (
+                      <AttachmentsSection
+                        attachments={detail.attachments}
+                        onDownload={detail.downloadAttachment}
+                        onUpload={file => uploadMut.mutate(file)}
+                        pending={uploadMut.isPending}
+                        reader={detail.reader}
+                      />
+                    )}
+                  </SidebarSection>
+                  <SidebarSection label={k.commentOverview}>
                     {contextComment ? (
                       <div
-                        className="flex min-w-0 flex-col gap-2 break-words"
+                        className="flex min-w-0 flex-col gap-4 break-words"
                         data-comment-context={String(contextComment.id)}
                       >
-                        <p className="text-[0.6875rem] text-(--ui-text-tertiary)">
-                          {contextComment.author} · #{floors.get(String(contextComment.id))} ·{' '}
-                          {ago(contextComment.created_at)}
-                        </p>
                         <MetaRow label={k.assignee}>{snapshot?.assignee ?? k.notRecorded}</MetaRow>
-                        <MetaRow label={k.phase}>{snapshot?.phase ?? k.notRecorded}</MetaRow>
-                        <MetaRow label={k.statusAtHandoff}>
-                          {snapshot ? columnLabel(k, snapshot.status) : k.notRecorded}
-                        </MetaRow>
-                        <MetaRow label={k.workspace}>{snapshot?.workspace_path ?? k.notRecorded}</MetaRow>
                         <MetaRow label={k.commentMaterials}>
                           {contextAttachments.length ? (
-                            <ul>
+                            <ul className="flex flex-col gap-1">
                               {contextAttachments.map(attachment => (
-                                <li key={attachment.id}>
+                                <li className="flex items-center gap-1.5" key={attachment.id}>
                                   <Attachment
                                     attachment={attachment}
                                     key={detail.reader.key}
@@ -1064,86 +1135,9 @@ export function TaskDrawer({
                         </MetaRow>
                       </div>
                     ) : (
-                      <p className="text-[0.75rem] text-(--ui-text-quaternary)">{k.noHandoff}</p>
+                      <p className="text-[0.75rem] text-(--ui-text-quaternary)">{k.noComments}</p>
                     )}
-                  </Section>
-                  <details>
-                    <summary className="cursor-pointer text-[0.75rem] font-medium text-(--ui-text-secondary)">
-                      {k.currentProperties}
-                    </summary>
-                    <div className="mt-3 flex flex-col gap-4">
-                      {typeof task.priority === 'number' && (
-                        <MetaRow label={k.metaPriority}>
-                          <PriorityGlyph priority={task.priority} />
-                        </MetaRow>
-                      )}
-                      {task.tenant && <MetaRow label={k.metaTenant}>{task.tenant}</MetaRow>}
-                      {/* #124391 — block detail the API already returns. The kind is
-                    retained across unblock, so present it as CURRENT only
-                    while the card sits in the blocked column. */}
-                      {task.status === 'blocked' && task.block_kind && (
-                        <MetaRow label={k.blockReason}>
-                          <Tip label={k.blockKindTip(task.block_kind)}>
-                            <span className="cursor-help text-destructive">{task.block_kind}</span>
-                          </Tip>
-                        </MetaRow>
-                      )}
-                      {typeof task.block_recurrences === 'number' && task.block_recurrences > 0 && (
-                        <MetaRow label={k.blockRecurrences}>
-                          <Tip label={k.blockRecurrencesTip}>
-                            <span className="cursor-help">×{task.block_recurrences}</span>
-                          </Tip>
-                        </MetaRow>
-                      )}
-                      {typeof task.consecutive_failures === 'number' && task.consecutive_failures > 0 && (
-                        <MetaRow label={k.consecutiveFailures}>{task.consecutive_failures}</MetaRow>
-                      )}
-                      {task.last_failure_error && (
-                        <MetaRow label={k.lastFailureError}>
-                          <span className="whitespace-pre-wrap font-mono text-[0.65rem] leading-snug text-(--ui-text-tertiary)">
-                            {task.last_failure_error}
-                          </span>
-                        </MetaRow>
-                      )}
-                      {task.workspace_path && (
-                        <MetaRow label={k.workspace}>
-                          <WorkspaceValue kind={task.workspace_kind} path={task.workspace_path} />
-                        </MetaRow>
-                      )}
-                      <MetaRow label={k.model}>
-                        <ModelOverrideField
-                          onChange={next => void mutate(() => patchTask(task.id, overridePatch(next)))()}
-                          value={{
-                            effort: task.reasoning_effort ?? '',
-                            model: task.model_override ?? '',
-                            provider: task.provider_override ?? ''
-                          }}
-                        />
-                      </MetaRow>
-                      {(detail.links.parents.length > 0 || detail.links.children.length > 0) &&
-                        (['parents', 'children'] as const).map(side =>
-                          detail.links[side].length > 0 ? (
-                            <MetaRow key={side} label={side === 'parents' ? k.blockedBy : k.blocks}>
-                              <LinkChips ids={detail.links[side]} linkTitles={linkTitles} onOpen={onOpen} />
-                            </MetaRow>
-                          ) : null
-                        )}
-                      {task.created_by && <MetaRow label={k.metaCreatedBy}>{task.created_by}</MetaRow>}
-                      {ago(task.created_at) && <MetaRow label={k.metaCreated}>{ago(task.created_at)}</MetaRow>}
-                      {running && task.worker_pid ? <MetaRow label={k.metaWorkerPid}>{task.worker_pid}</MetaRow> : null}
-                      <EstimateSection id={task.id} />
-                    </div>
-                  </details>
-
-                  {Array.isArray(detail.attachments) && (
-                    <AttachmentsSection
-                      attachments={detail.attachments}
-                      onDownload={detail.downloadAttachment}
-                      onUpload={file => uploadMut.mutate(file)}
-                      pending={uploadMut.isPending}
-                      reader={detail.reader}
-                    />
-                  )}
+                  </SidebarSection>
                 </aside>
               </div>
             </>

@@ -171,12 +171,10 @@ type KanbanMessages = {
   newestFirst: string
   oldestFirst: string
   selectComment: string
-  selectedContext: string
-  latestHandoff: string
-  noHandoff: string
   notRecorded: string
   handoff: string
   discussion: string
+  commentOverview: string
   currentProperties: string
   runSummarySource: string
   commentMaterials: string
@@ -450,13 +448,11 @@ export const en: KanbanMessages = {
   newestFirst: 'Newest first',
   oldestFirst: 'Oldest first',
   selectComment: 'Select comment',
-  selectedContext: 'Selected comment',
-  latestHandoff: 'Latest handoff',
-  noHandoff: 'No formal handoff',
   notRecorded: 'Not recorded',
   handoff: 'Handoff',
   discussion: 'Discussion',
-  currentProperties: 'Current task properties',
+  commentOverview: 'Comment overview',
+  currentProperties: 'Task properties',
   runSummarySource: 'Source: worker run summary',
   commentMaterials: 'Comment materials',
   phase: 'Phase',
@@ -723,13 +719,11 @@ const ja: KanbanMessages = {
   newestFirst: '新しい順',
   oldestFirst: '古い順',
   selectComment: 'コメントを選択',
-  selectedContext: '選択したコメント',
-  latestHandoff: '最新の引き継ぎ',
-  noHandoff: '正式な引き継ぎなし',
   notRecorded: '未記録',
   handoff: '引き継ぎ',
   discussion: '会話',
-  currentProperties: '現在のタスク属性',
+  commentOverview: 'コメント概要',
+  currentProperties: 'タスク属性',
   runSummarySource: '出典：実行サマリー',
   commentMaterials: 'コメント資料',
   phase: '段階',
@@ -995,20 +989,18 @@ const zh: KanbanMessages = {
   newestFirst: '最新在前',
   oldestFirst: '最早在前',
   selectComment: '选择评论',
-  selectedContext: '选中评论',
-  latestHandoff: '最新交接',
-  noHandoff: '暂无正式交接',
   notRecorded: '未记录',
   handoff: '交接',
   discussion: '讨论',
-  currentProperties: '当前任务属性',
+  commentOverview: '评论简况',
+  currentProperties: '任务属性',
   runSummarySource: '来源：工作单元运行摘要',
   commentMaterials: '评论材料',
   phase: '阶段',
   statusAtHandoff: '交接时状态',
   reportedVerification: '交接验证声明',
   declaredScope: '交接范围声明',
-  allAttachments: '卡片全部附件',
+  allAttachments: '全部附件',
   clearCommentSelection: '清除选择',
 
   dependencies: '依赖关系',
@@ -1265,20 +1257,18 @@ const zhHant: KanbanMessages = {
   newestFirst: '最新在前',
   oldestFirst: '最早在前',
   selectComment: '選擇留言',
-  selectedContext: '選中留言',
-  latestHandoff: '最新交接',
-  noHandoff: '暫無正式交接',
   notRecorded: '未記錄',
   handoff: '交接',
   discussion: '討論',
-  currentProperties: '目前任務屬性',
+  commentOverview: '留言簡況',
+  currentProperties: '任務屬性',
   runSummarySource: '來源：工作單元執行摘要',
   commentMaterials: '留言材料',
   phase: '階段',
   statusAtHandoff: '交接時狀態',
   reportedVerification: '交接驗證聲明',
   declaredScope: '交接範圍聲明',
-  allAttachments: '卡片全部附件',
+  allAttachments: '全部附件',
   clearCommentSelection: '清除選擇',
 
   dependencies: '相依關係',

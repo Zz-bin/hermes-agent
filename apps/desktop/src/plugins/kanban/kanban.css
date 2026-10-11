@@ -133,3 +133,23 @@
     border-left: 0;
   }
 }
+
+.kanban-sidebar-section > summary {
+  position: relative;
+  list-style: none;
+}
+.kanban-sidebar-section > summary::-webkit-details-marker {
+  display: none;
+}
+.kanban-sidebar-section > summary::before {
+  position: absolute;
+  left: -0.75rem;
+  content: '▸';
+}
+.kanban-sidebar-section[open] > summary::before {
+  content: '▾';
+}
+.kanban-sidebar-section + .kanban-sidebar-section {
+  border-top: 1px solid var(--ui-stroke-tertiary);
+  padding-top: 1rem;
+}

@@ -42,8 +42,8 @@ describe('comment context', () => {
       const captured = { ...legacy, id: 10, context: snapshot }
       expect(isHandoff(legacy)).toBe(true)
       expect(handoffContext(legacy)).toBeNull()
-      expect(resolveCommentContext([...comments, legacy], null, '')?.id).toBe(9)
-      expect(resolveCommentContext([...comments, captured, legacy], null, '')?.id).toBe(10)
+      expect(resolveCommentContext([...comments, legacy], '9', '')?.id).toBe(9)
+      expect(resolveCommentContext([...comments, captured, legacy], '10', '')?.id).toBe(10)
       expect(handoffContext(captured)?.approval_scope).toBeUndefined()
     }
 
@@ -57,8 +57,8 @@ describe('comment context', () => {
       expect(isHandoff({ ...comments[2], body })).toBe(false)
     }
   })
-  it('defaults to the latest formal handoff, never a later discussion', () => {
-    expect(resolveCommentContext(comments, null, '')?.id).toBe(2)
+  it('defaults to the latest comment, including discussion', () => {
+    expect(resolveCommentContext(comments, null, '')?.id).toBe(3)
     expect(isHandoff(comments[2])).toBe(false)
   })
   it('explicit discussion has no invented history', () => {
@@ -68,8 +68,8 @@ describe('comment context', () => {
   })
   it('clearing selection restores default and hiding it does too', () => {
     expect(resolveCommentContext(comments, '1', '')?.id).toBe(1)
-    expect(resolveCommentContext(comments, null, '')?.id).toBe(2)
-    expect(resolveCommentContext(comments, '1', 'reviewer')?.id).toBe(2)
+    expect(resolveCommentContext(comments, null, '')?.id).toBe(3)
+    expect(resolveCommentContext(comments, '1', 'reviewer')?.id).toBe(3)
   })
   it('sorting never mutates data or changes context selection', () => {
     expect(visibleComments(comments, '', 'newest').map(c => c.id)).toEqual([3, 2, 1])
@@ -81,9 +81,9 @@ describe('comment context', () => {
     const tied = [comments[0], { ...comments[0], id: 10 }]
     expect(visibleComments(tied, '', 'newest')[0].id).toBe(10)
   })
-  it('empty and non-handoff cards have no default', () => {
+  it('handles empty cards and cards with only discussion', () => {
     expect(resolveCommentContext([], null, '')).toBeNull()
-    expect(resolveCommentContext([comments[2]], null, '')).toBeNull()
+    expect(resolveCommentContext([comments[2]], null, '')).toBe(comments[2])
   })
   it('legacy headers identify handoffs without backfilling their snapshots', () => {
     expect(isHandoff(comments[1])).toBe(true)
