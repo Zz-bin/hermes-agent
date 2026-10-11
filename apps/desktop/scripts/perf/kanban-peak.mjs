@@ -143,7 +143,7 @@ try {
       ['activity', /^(活动|Activity)/],
       ['runs', /^(运行|Runs)/],
       ['log', /^(工作单元日志|Worker log)/],
-      ['comments', /^(评论|Comments)/]
+      ['comments', /^(评论|Comments)(?:[・·\s]|$)/]
     ]) {
       await measure(
         `feed-${feed}`,
