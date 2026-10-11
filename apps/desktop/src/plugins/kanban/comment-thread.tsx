@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { isHandoff, visibleComments } from './comment-context'
 import { discussionScroller } from './discussion-scroll'
 import { FloorDirectory } from './floor-directory'
+import { TextDisclosure } from './text-disclosure'
 import type { KanbanComment } from './types'
 import { ago, type KanbanText } from './ui'
 
@@ -28,12 +29,14 @@ export function CommentThread({
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [located, setLocated] = useState<{ id: string } | null>(null)
+  const [highlighted, setHighlighted] = useState<string | null>(null)
   const list = useRef<HTMLUListElement>(null)
   const authors = [...new Set(comments.map(comment => comment.author))].sort()
   const shown = visibleComments(comments, selection.author, selection.order)
 
   const locate = (id: string) => {
     setExpanded(previous => new Set([...previous, id]))
+    setHighlighted(id)
     setLocated({ id })
   }
 
@@ -125,10 +128,12 @@ export function CommentThread({
 
             return (
               <li
-                className={`kanban-floor min-w-0 border-l-2 border-t border-t-(--ui-stroke-tertiary) pt-3 pl-3 ${selected ? 'border-l-(--ui-accent)' : 'border-l-(--ui-stroke-tertiary)'}`}
+                className="kanban-floor flex min-w-0 flex-col items-start gap-2 border-l-2 border-t border-t-(--ui-stroke-tertiary) pt-3 pl-3"
                 data-comment-id={id}
-                data-located={located?.id === id || undefined}
+                data-highlighted={highlighted === id || undefined}
                 key={id}
+                onClick={() => setHighlighted(id)}
+                onFocus={() => setHighlighted(id)}
                 tabIndex={-1}
               >
                 <Button
@@ -147,14 +152,15 @@ export function CommentThread({
                   <span className="text-[0.625rem] text-(--ui-text-quaternary)">{ago(comment.created_at)}</span>
                 </Button>
                 <div
-                  className={`mt-2 break-words ${open ? '' : 'max-h-[4.5rem] overflow-hidden'}`}
+                  className={`w-full break-words [&_.aui-md>:first-child]:mt-0 [&_.aui-md>:last-child]:mb-0 ${open ? '' : 'max-h-[4.5rem] overflow-hidden'}`}
                   inert={!open || undefined}
                 >
                   {renderBody(comment.body)}
                 </div>
                 {long && (
-                  <Button
-                    aria-expanded={open}
+                  <TextDisclosure
+                    expanded={open}
+                    k={k}
                     onClick={() =>
                       setExpanded(previous => {
                         const next = new Set(previous)
@@ -168,11 +174,7 @@ export function CommentThread({
                         return next
                       })
                     }
-                    size="xs"
-                    variant="ghost"
-                  >
-                    {open ? k.collapseText : k.expandText}
-                  </Button>
+                  />
                 )}
               </li>
             )

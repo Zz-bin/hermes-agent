@@ -4,10 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { I18nProvider } from '@/i18n'
 
+import type { fetchTask } from '../plugins/kanban/api'
 import { TaskDrawer } from '../plugins/kanban/drawer'
 import { en } from '../plugins/kanban/i18n'
 import type * as KanbanI18n from '../plugins/kanban/i18n'
-import type { fetchTask } from '../plugins/kanban/api'
 
 const mocks = vi.hoisted(() => ({
   fetchTask: vi.fn(),
@@ -151,8 +151,10 @@ describe('native TaskDrawer comment inspection', () => {
     expect(context().dataset.commentContext).toBe('1')
     expect(within(context()).getByText('old-owner')).toBeTruthy()
     expect(within(context()).getByText('/worktree/design.md')).toBeTruthy()
-    expect(within(context()).getByText('VERBATIM VERIFICATION')).toBeTruthy()
-    expect(within(context()).getByText('Implementation only')).toBeTruthy()
+    expect(within(context()).queryByText(en.reportedVerification)).toBeNull()
+    expect(within(context()).queryByText(en.declaredScope)).toBeNull()
+    expect(within(context()).queryByText('VERBATIM VERIFICATION')).toBeNull()
+    expect(within(context()).queryByText('Implementation only')).toBeNull()
     expect(screen.getAllByRole('button', { name: en.editDescription })).toHaveLength(1)
     expect(within(context()).getByText('first.svg')).toBeTruthy()
     expect(within(context()).queryByText('second.svg')).toBeNull()

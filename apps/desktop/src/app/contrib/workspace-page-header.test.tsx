@@ -32,12 +32,13 @@ const probe = (
   </WorkspacePageHeaderControl>
 )
 
-const workspaceZone = (chatRoutes: ReactNode) => (
+const workspaceZone = (chatRoutes: ReactNode, topEdge = false) => (
   <ContribWiringContext.Provider value={wiring(chatRoutes)}>
     <TreeGroup
       leftEdge
       node={{ active: 'workspace', id: 'main-zone', panes: ['workspace'], type: 'group' }}
       rightEdge
+      topEdge={topEdge}
     />
   </ContribWiringContext.Provider>
 )
@@ -50,6 +51,46 @@ afterEach(() => {
 })
 
 describe('workspace page header host', () => {
+  it('moves the window from top-edge page header gaps while preserving interactive controls', () => {
+    vi.stubGlobal('CSS', { escape: (value: string) => value })
+    stubResizeObserver()
+    act(() => $workspaceIsPage.set(true))
+
+    let panelWidth = 1000
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const left = this.dataset.titlebarCluster === 'right' ? 900 : 0
+      const width = this.dataset.titlebarCluster ? 60 : panelWidth
+
+      return { bottom: 34, height: 34, left, right: left + width, top: 0, width, x: left, y: 0 } as DOMRect
+    })
+
+    const scene = (topEdge: boolean) => (
+      <>
+        <div data-titlebar-cluster="left" />
+        <div data-titlebar-cluster="right" />
+        {workspaceZone(probe, topEdge)}
+      </>
+    )
+
+    const { container, rerender } = render(scene(true))
+    const header = () => container.querySelector<HTMLElement>('[data-panel-page-header]')!
+
+    expect(header().classList.contains('[-webkit-app-region:drag]')).toBe(true)
+    expect(
+      screen
+        .getByRole('button', { name: 'probe-ctl' })
+        .closest('.group\\/tab')
+        ?.classList.contains('[-webkit-app-region:no-drag]')
+    ).toBe(true)
+
+    panelWidth = 100
+    act(() => window.dispatchEvent(new Event('resize')))
+    expect(header().classList.contains('[-webkit-app-region:drag]')).toBe(false)
+
+    rerender(scene(false))
+    expect(header().classList.contains('[-webkit-app-region:drag]')).toBe(false)
+  })
+
   it('projects a hosted control into the painted page header, not the pane body', () => {
     vi.stubGlobal('CSS', { escape: (value: string) => value })
     stubResizeObserver()

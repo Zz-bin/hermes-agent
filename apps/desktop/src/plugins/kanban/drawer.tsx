@@ -58,6 +58,7 @@ import { handoffContext, resolveCommentContext } from './comment-context'
 import { CommentMarkdown } from './comment-markdown'
 import { type CommentSelection, CommentThread } from './comment-thread'
 import { ModelOverrideField, overridePatch } from './model-override'
+import { TextDisclosure } from './text-disclosure'
 import {
   type Diagnostic,
   type DiagnosticAction,
@@ -98,7 +99,11 @@ function eventText(event: KanbanEvent, k: KanbanText): { detail?: string; label:
 
   if (typeof event.payload === 'string' && event.payload) {
     try {
-      p = JSON.parse(event.payload) as Record<string, unknown>
+      const parsed: unknown = JSON.parse(event.payload)
+
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        p = parsed as Record<string, unknown>
+      }
     } catch {
       return { label: event.kind.replace(/_/g, ' '), detail: event.payload }
     }
@@ -367,15 +372,11 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
           </Button>
         </div>
       ) : body ? (
-        <div>
-          <div className={expanded ? '' : 'max-h-[4.5rem] overflow-hidden'} ref={preview}>
+        <div className="flex flex-col items-start gap-2">
+          <div className={`w-full ${expanded ? '' : 'max-h-[4.5rem] overflow-hidden'}`} ref={preview}>
             <TaskMarkdown text={body} />
           </div>
-          {long && (
-            <Button aria-expanded={expanded} onClick={() => setExpanded(!expanded)} size="xs" variant="ghost">
-              {expanded ? k.collapseText : k.expandText}
-            </Button>
-          )}
+          {long && <TextDisclosure expanded={expanded} k={k} onClick={() => setExpanded(!expanded)} />}
         </div>
       ) : (
         <p className="text-[0.8125rem] text-(--ui-text-quaternary)">{k.noDescription}</p>
@@ -433,7 +434,7 @@ function AttachmentsSection({
             size="icon-xs"
             variant="ghost"
           >
-            <Codicon name={pending ? 'sync' : 'cloud-upload'} size="0.8rem" spinning={pending} />
+            <Codicon name={pending ? 'sync' : 'cloud-upload'} spinning={pending} />
           </Button>
         </>
       }
@@ -575,7 +576,7 @@ function FeedTabs({
   running: boolean
 }) {
   const k = useKanban()
-  const [tab, setTab] = useState<'activity' | 'comments' | 'log' | 'runs'>('comments')
+  const [selectedTab, setTab] = useState<'activity' | 'comments' | 'log' | 'runs'>('comments')
 
   const hasLog = !!log?.exists && !!log.content
   const switchable = detail.events.length > 0 || detail.runs.length > 0 || hasLog
@@ -590,6 +591,14 @@ function FeedTabs({
       t.id === 'comments' ||
       (t.id === 'activity' ? detail.events.length > 0 : t.id === 'runs' ? detail.runs.length > 0 : hasLog)
   )
+
+  const tab = tabs.some(option => option.id === selectedTab) ? selectedTab : 'comments'
+
+  useEffect(() => {
+    if (tab !== selectedTab) {
+      setTab(tab)
+    }
+  }, [selectedTab, tab])
 
   const help = (
     <Tip label={running ? k.commentsHelpRunning : k.commentsHelp}>
@@ -678,7 +687,7 @@ function FeedTabs({
       )}
       {tab === 'log' && (
         <ScrollFade deps={log?.content.length} max="12rem">
-          <LogView className="border-0 px-0">{log!.content}</LogView>
+          <LogView className="border-0 px-0">{log?.content}</LogView>
         </ScrollFade>
       )}
     </div>
@@ -995,18 +1004,6 @@ export function TaskDrawer({
                         {snapshot ? columnLabel(k, snapshot.status) : k.notRecorded}
                       </MetaRow>
                       <MetaRow label={k.workspace}>{snapshot?.workspace_path ?? k.notRecorded}</MetaRow>
-                      {snapshot?.approval_scope && (
-                        <details>
-                          <summary className="cursor-pointer text-[0.6875rem]">{k.declaredScope}</summary>
-                          <TaskMarkdown text={snapshot.approval_scope} />
-                        </details>
-                      )}
-                      {snapshot?.verification && (
-                        <details>
-                          <summary className="cursor-pointer text-[0.6875rem]">{k.reportedVerification}</summary>
-                          <TaskMarkdown text={snapshot.verification} />
-                        </details>
-                      )}
                       <MetaRow label={k.commentMaterials}>
                         {contextAttachments.length ? (
                           <ul>
@@ -1031,13 +1028,13 @@ export function TaskDrawer({
                           </span>
                         )}
                         {snapshot?.material_paths?.map(path => (
-                          <div className="flex min-w-0 items-start gap-1" key={path}>
+                          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1" key={path}>
                             <Attachment
                               attachment={{ id: path, filename: path, stored_path: path }}
                               onDownload={detail.downloadAttachment}
                               reader={detail.reader}
                             />
-                            <CopyButton text={path} />
+                            <CopyButton appearance="icon" buttonSize="icon-xs" text={path} />
                           </div>
                         ))}
                       </MetaRow>

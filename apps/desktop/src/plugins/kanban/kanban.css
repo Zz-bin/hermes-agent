@@ -73,9 +73,11 @@
   width: 18px;
   background: var(--ui-accent);
 }
-.kanban-floor[data-located]:focus {
-  outline: 1px solid var(--ui-accent);
-  outline-offset: 3px;
+.kanban-floor {
+  border-left-color: var(--ui-stroke-tertiary);
+}
+.kanban-floor[data-highlighted] {
+  border-left-color: var(--ui-accent);
 }
 .kanban-floor-menu {
   animation-duration: 120ms;

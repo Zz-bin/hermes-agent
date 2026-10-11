@@ -578,7 +578,8 @@ function NewTaskDialog({
   const [assignee, setAssignee] = useState('')
   const [priority, setPriority] = useState('0')
   const [skills, setSkills] = useState('')
-  const [workspaceKind, setWorkspaceKind] = useState<string>(boardDefaultKind)
+  const [workspaceKindOverride, setWorkspaceKind] = useState<null | string>(null)
+  const workspaceKind = workspaceKindOverride ?? boardDefaultKind
   // Empty = inherit the board's default project dir (backend resolves it);
   // a path here overrides just this task. Only meaningful for dir/worktree.
   const [workspacePath, setWorkspacePath] = useState('')
@@ -604,8 +605,8 @@ function NewTaskDialog({
   })
 
   // Reset per open — the dialog is externally controlled (open = target set),
-  // so onOpenChange(true) never fires; key the reset off `target` (and the
-  // resolved board default, which may arrive after the first open).
+  // so onOpenChange(true) never fires. Delayed defaults update only inherited
+  // workspace values; they must not clear a draft the user has already typed.
   useEffect(() => {
     if (target) {
       setTitle('')
@@ -613,7 +614,7 @@ function NewTaskDialog({
       setAssignee('')
       setPriority('0')
       setSkills('')
-      setWorkspaceKind(boardDefaultKind)
+      setWorkspaceKind(null)
       setWorkspacePath('')
       setParent('')
       setModelOverride(EMPTY_OVERRIDE)
@@ -622,7 +623,7 @@ function NewTaskDialog({
       setBusy(false)
       setEstimate(null)
     }
-  }, [target, boardDefaultKind])
+  }, [target])
 
   const submit = async () => {
     const trimmed = title.trim()

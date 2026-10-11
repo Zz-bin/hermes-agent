@@ -87,8 +87,33 @@ it('requires confirmation to reveal a filtered original floor and never selects 
   expect(container.querySelector('[data-comment-id="11"] button[aria-pressed]')?.getAttribute('aria-pressed')).toBe(
     'false'
   )
+  expect(container.querySelector('[data-comment-id="11"]')?.hasAttribute('data-highlighted')).toBe(true)
   const otherDisclosure = container.querySelector<HTMLButtonElement>('[data-comment-id="35"] button[aria-expanded]')!
   otherDisclosure.focus()
   fireEvent.click(otherDisclosure)
   expect(otherDisclosure.ownerDocument.activeElement).toBe(otherDisclosure)
+})
+
+it('highlights the comment body on click and transfers the same highlight on focus without changing context', () => {
+  const change = vi.fn()
+
+  const { container } = render(
+    <CommentThread
+      comments={comments}
+      k={en}
+      onChange={change}
+      renderBody={body => <p>{body}</p>}
+      selection={{ author: '', order: 'oldest', selected: '35' }}
+    />
+  )
+
+  const first = container.querySelector<HTMLElement>('[data-comment-id="11"]')!
+  const second = container.querySelector<HTMLElement>('[data-comment-id="35"]')!
+  fireEvent.click(first.querySelector('p')!)
+  expect(first.hasAttribute('data-highlighted')).toBe(true)
+  expect(second.hasAttribute('data-highlighted')).toBe(false)
+  fireEvent.focus(second.querySelector('button[aria-expanded]')!)
+  expect(first.hasAttribute('data-highlighted')).toBe(false)
+  expect(second.hasAttribute('data-highlighted')).toBe(true)
+  expect(change).not.toHaveBeenCalled()
 })

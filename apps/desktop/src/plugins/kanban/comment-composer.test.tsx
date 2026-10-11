@@ -98,7 +98,7 @@ it('retains successful image IDs across a partial upload and does not upload rem
     })
   }
 
-  const { container } = render(
+  render(
     <CommentComposer actions={actions} draftKey="partial-images" imagesSupported onSaved={vi.fn()} running={false} />
   )
 
@@ -109,7 +109,7 @@ it('retains successful image IDs across a partial upload and does not upload rem
     return file
   })
 
-  fireEvent.change(container.querySelector('input[type=file]')!, { target: { files } })
+  fireEvent.drop(screen.getByRole('textbox'), { dataTransfer: { files } })
   fireEvent.click(screen.getByRole('button', { name: `${en.removeImage} removed.png` }))
   fireEvent.click(screen.getByRole('button', { name: en.comment }))
   await screen.findByText(en.checkBeforeRetry)
@@ -192,11 +192,11 @@ it('identifies renamed committed images by original bytes rather than a same-siz
     })
   }
 
-  const { container } = render(
+  render(
     <CommentComposer actions={actions} draftKey="renamed-image" imagesSupported onSaved={vi.fn()} running={false} />
   )
 
-  fireEvent.change(container.querySelector('input[type=file]')!, { target: { files: [file] } })
+  fireEvent.drop(screen.getByRole('textbox'), { dataTransfer: { files: [file] } })
   fireEvent.click(screen.getByRole('button', { name: en.comment }))
   fireEvent.click(await screen.findByRole('button', { name: en.checkOriginalTask }))
   await screen.findByText(en.imageSaved)

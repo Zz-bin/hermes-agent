@@ -67,10 +67,10 @@ export function Attachment({ attachment, onDownload, reader }: AttachmentProps) 
   const download = useMutation({ mutationFn: () => onDownload(path!, attachment.filename) })
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1">
+    <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
       <Button
         aria-label={`${k.open} ${attachment.filename}`}
-        className="min-w-0 justify-start font-normal"
+        className="min-w-0 overflow-hidden justify-start font-normal"
         disabled={!path}
         onClick={() => setOpen(true)}
         ref={entry}
@@ -89,7 +89,7 @@ export function Attachment({ attachment, onDownload, reader }: AttachmentProps) 
       >
         <Codicon name={download.isPending ? 'sync' : 'cloud-download'} spinning={download.isPending} />
       </Button>
-      {!path && <span className="basis-full text-[0.7rem] text-(--ui-text-tertiary)">{k.materialUnavailable}</span>}
+      {!path && <span className="col-span-2 text-[0.7rem] text-(--ui-text-tertiary)">{k.materialUnavailable}</span>}
 
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent

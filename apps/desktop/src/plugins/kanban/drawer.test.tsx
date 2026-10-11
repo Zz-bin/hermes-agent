@@ -13,10 +13,10 @@ import { registerPluginLocales } from '@/i18n/plugin-i18n'
 // eslint-disable-next-line no-restricted-imports
 import { $notifications, clearNotifications } from '@/store/notifications'
 
-import { bindApi, taskKey } from './api'
+import { bindApi, logKey, taskKey } from './api'
 import { TaskDrawer } from './drawer'
 import { en, KANBAN_LOCALES } from './i18n'
-import type { KanbanTaskDetail } from './types'
+import type { KanbanTaskDetail, WorkerLog } from './types'
 
 vi.mock('@/hermes', () => ({ setApiRequestProfile: vi.fn() }))
 
@@ -29,6 +29,7 @@ const legacyDetail: Omit<KanbanTaskDetail, 'attachments'> = {
 }
 
 let detail: object
+let workerLog: WorkerLog
 let client: QueryClient
 let disposeApi: () => void
 let disposeLocales: () => void
@@ -49,7 +50,7 @@ const rest = vi.fn(async (path: string, options?: PluginRestOptions): Promise<un
   }
 
   if (path.startsWith('/tasks/t_example/log?')) {
-    return { exists: false, content: '', size_bytes: 0, truncated: false }
+    return workerLog
   }
 
   if (path === '/profiles') {
@@ -64,6 +65,7 @@ const rest = vi.fn(async (path: string, options?: PluginRestOptions): Promise<un
 })
 
 beforeEach(() => {
+  workerLog = { exists: false, content: '', size_bytes: 0, truncated: false }
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   disposeLocales = registerPluginLocales('kanban', KANBAN_LOCALES)
   disposeApi = bindApi(
@@ -240,6 +242,34 @@ describe('task attachment compatibility', () => {
 })
 
 describe('task modal dialog', () => {
+  it('keeps activity readable when a serialized event payload is not an object', async () => {
+    detail = {
+      ...legacyDetail,
+      events: [{ id: 1, kind: 'status', payload: 'null', created_at: 0 }]
+    }
+    openDrawer()
+    fireEvent.click(await screen.findByRole('button', { name: en.activity(1) }))
+    expect(await screen.findByText(en.evtMovedTo('?'))).toBeTruthy()
+  })
+
+  it('returns to comments when the selected feed disappears after a refresh', async () => {
+    detail = { ...legacyDetail, events: [{ id: 1, kind: 'created', payload: null, created_at: 0 }] }
+    workerLog = { exists: true, content: 'Worker output', size_bytes: 13, truncated: false }
+    openDrawer()
+    fireEvent.click(await screen.findByRole('button', { name: en.workerLog }))
+    expect(screen.getByText('Worker output')).toBeTruthy()
+    await act(async () => {
+      workerLog = { exists: false, content: '', size_bytes: 0, truncated: false }
+      await client.invalidateQueries({ queryKey: logKey('local', '', legacyDetail.task.id) })
+    })
+    expect(await screen.findByRole('button', { name: en.comments(1), pressed: true })).toBeTruthy()
+    expect(screen.getByText(legacyDetail.comments[0].body)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: en.activity(1) }))
+    detail = { ...legacyDetail }
+    await act(() => client.invalidateQueries({ queryKey: taskKey('local', '', legacyDetail.task.id) }))
+    expect(await screen.findByText(legacyDetail.comments[0].body)).toBeTruthy()
+  })
+
   it('is a modal dialog named by the task title that Esc dismisses', async () => {
     detail = { ...legacyDetail, attachments: [] }
     const onClose = vi.fn()

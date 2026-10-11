@@ -1,5 +1,4 @@
 import { Button, Codicon, extractClipboardImageBlobs, isSubmitEnter, Textarea } from '@hermes/plugin-sdk'
-import { useRef } from 'react'
 
 import type { DraftImage } from './comment-composer'
 import { useKanban } from './ui'
@@ -40,7 +39,6 @@ export function CommentComposerView({
   allowRetry
 }: CommentComposerViewProps) {
   const k = useKanban()
-  const picker = useRef<HTMLInputElement>(null)
   const disabled = pending || uncertain || requeueOnly
 
   return (
@@ -68,7 +66,23 @@ export function CommentComposerView({
           ))}
         </div>
       )}
-      <div className="relative">
+      <div
+        className="relative"
+        onDragOver={event => {
+          if (!disabled && imagesSupported && event.dataTransfer.types.includes('Files')) {
+            event.preventDefault()
+            event.stopPropagation()
+            event.dataTransfer.dropEffect = 'copy'
+          }
+        }}
+        onDrop={event => {
+          if (!disabled && imagesSupported && event.dataTransfer.files.length) {
+            event.preventDefault()
+            event.stopPropagation()
+            addImages(Array.from(event.dataTransfer.files))
+          }
+        }}
+      >
         <Textarea
           aria-label={running ? k.messageWorker : k.addComment}
           className="field-sizing-content max-h-[min(10rem,25vh)] resize-none pr-9 text-[0.8125rem]"
@@ -107,27 +121,7 @@ export function CommentComposerView({
           <Codicon name="arrow-up" />
         </Button>
       </div>
-      <input
-        accept="image/*"
-        hidden
-        multiple
-        onChange={event => {
-          addImages(Array.from(event.target.files ?? []))
-          event.target.value = ''
-        }}
-        ref={picker}
-        type="file"
-      />
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          aria-label={`${k.comment} · ${k.uploadAttachment}`}
-          disabled={disabled || !imagesSupported}
-          onClick={() => picker.current?.click()}
-          size="icon-xs"
-          variant="ghost"
-        >
-          <Codicon name="file-media" />
-        </Button>
+      <div className="flex items-center justify-end gap-2">
         {requeueOnly ? (
           <Button disabled={pending} onClick={() => void submit(true)} size="xs" variant="outline">
             {k.retryRequeue}
