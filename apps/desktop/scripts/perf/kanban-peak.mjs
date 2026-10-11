@@ -148,7 +148,7 @@ try {
       await measure(
         `feed-${feed}`,
         async () => {
-          await dialog.getByRole('button', { name }).click()
+          await dialog.locator('button[aria-pressed]').filter({ hasText: name }).click()
           await dialog.locator(`[data-kanban-feed="${feed}"][aria-busy="false"]`).waitFor()
           if ((await dialog.locator('[data-kanban-feed]').count()) !== 1) throw new Error('More than one feed mounted')
           if (feed !== 'comments' && (await dialog.locator('[data-comment-id]').count()))
