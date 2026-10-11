@@ -1,0 +1,33 @@
+
+ RUN  v4.1.10 /home/capz/worktrees/hermes-kanban-detail/apps/desktop
+
+ ❯ |ui| src/plugins/kanban/attachment.test.tsx (3 tests | 1 failed) 181ms
+   × never lets material file links escape its read-only owner across source switches or disconnect 60ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |ui| src/plugins/kanban/attachment.test.tsx > never lets material file links escape its read-only owner across source switches or disconnect
+AssertionError: expected null to be 'true' // Object.is equality
+
+- Expected:
+"true"
+
++ Received:
+null
+
+ ❯ src/plugins/kanban/attachment.test.tsx:94:50
+     92|     for (const name of ['relative', 'absolute', 'file', 'preview']) {
+     93|       const link = screen.getByRole('link', { name })
+     94|       expect(link.getAttribute('aria-disabled')).toBe('true')
+       |                                                  ^
+     95|       expect(link.hasAttribute('href')).toBe(false)
+     96|       fireEvent.click(link)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  15:50:47
+   Duration  6.64s (transform 4.76s, setup 152ms, import 5.89s, tests 181ms, environment 340ms)
+

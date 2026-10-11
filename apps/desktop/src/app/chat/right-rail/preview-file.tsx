@@ -407,7 +407,12 @@ function MarkdownImage({ alt, src, ...rest }: ComponentProps<'img'>) {
   )
 }
 
-const PreviewNoteContext = createContext<string | undefined>(undefined)
+interface PreviewNotePolicy {
+  filePath?: string
+  disableFileLinks?: boolean
+}
+
+const PreviewNoteContext = createContext<PreviewNotePolicy>({})
 
 const MARKDOWN_LINK_CLASS = 'text-foreground underline underline-offset-2 hover:text-primary'
 
@@ -423,13 +428,29 @@ async function openLinkedNote(target: string, filePath?: string) {
 // native; a blank window is denied by Electron), `#preview/…` → the preview
 // rail, `#fragment` → scroll this note (the hash must never reach the router).
 function MarkdownLink({ children, className, href, node: _node, ...rest }: ComponentProps<'a'> & { node?: unknown }) {
-  const filePath = useContext(PreviewNoteContext)
+  const { filePath, disableFileLinks } = useContext(PreviewNoteContext)
+  const { t } = useI18n()
   const raw = href?.trim() ?? ''
   const fileTarget = previewTargetFromMarkdownHref(raw)
   const linkClass = cn(MARKDOWN_LINK_CLASS, className)
 
   if (!raw) {
     return <span className={linkClass}>{children}</span>
+  }
+
+  // The global preview resolves against the active owner and permits edits.
+  // A fixed-owner material must never escape into that navigation path.
+  if (disableFileLinks && (fileTarget || (!raw.startsWith('#') && !/^https?:\/\//i.test(raw)))) {
+    return (
+      <span
+        aria-disabled="true"
+        className="cursor-not-allowed text-muted-foreground"
+        role="link"
+        title={t.preview.unavailable}
+      >
+        {children}
+      </span>
+    )
   }
 
   if (!fileTarget && !raw.startsWith('#')) {
@@ -493,11 +514,11 @@ const MARKDOWN_COMPONENTS = {
 const PREVIEW_REMARK_PLUGINS = [...Object.values(defaultRemarkPlugins), remarkPreviewFileLinks]
 const PREVIEW_REHYPE_PLUGINS = [...Object.values(defaultRehypePlugins), rehypePreviewHeadingIds]
 
-export function MarkdownPreview({ filePath, text }: { filePath?: string; text: string }) {
+export function MarkdownPreview({ filePath, disableFileLinks, text }: PreviewNotePolicy & { text: string }) {
   const mathText = useMemo(() => normalizeFilePreviewMath(text), [text])
 
   return (
-    <PreviewNoteContext.Provider value={filePath}>
+    <PreviewNoteContext.Provider value={{ filePath, disableFileLinks }}>
       <div
         className="preview-markdown mx-auto max-w-3xl px-4 py-3 text-sm text-foreground"
         data-preview-markdown=""
@@ -1281,7 +1302,7 @@ export function LocalFilePreview({
         />
         <div className="min-h-0 flex-1 overflow-auto">
           {mode === 'rendered' ? (
-            <MarkdownPreview filePath={filePath} text={state.text} />
+            <MarkdownPreview disableFileLinks={Boolean(reader)} filePath={filePath} text={state.text} />
           ) : mode === 'diff' ? (
             <FileDiffPanel
               className="mx-0 mb-0 h-full max-h-none"

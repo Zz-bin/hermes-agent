@@ -1,0 +1,91 @@
+
+ RUN  v4.1.10 /home/capz/worktrees/hermes-kanban-detail/apps/desktop
+
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > pins backend material reads through local → remote → local and identity A → B → A 2ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > does not fall back to client storage after the original backend rejects a material 1ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > uses local Electron filesystem methods in local mode 2ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > routes filesystem reads through authenticated backend REST in remote mode 1ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > creates remote folders through the backend mkdir route for the active profile 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > does not retry the same unreadable path through the local facade 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > falls back from local disk to the active gateway in remote mode 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > targets the active profile backend so a remote profile never reads local disk 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > pins SSH filesystem reads to the active registry connection 1ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > pins remote filesystem requests to the active registry connection 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > separates filesystem cache keys for registered connections sharing a profile 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > prefers registry connection identity over SSH host identity 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > keys SSH filesystem caches by stable host identity instead of the forwarded port 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > separates SSH filesystem caches by ownership and profile 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > routes file diffs through backend git in remote mode 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > uses the registered in-app directory picker in remote mode 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > uses the local Electron picker for remote file selection 0ms
+ ✓ |ui| src/lib/desktop-fs.test.ts > desktop filesystem facade > limits the remote picker to single-directory selection 0ms
+ ✓ |ui| src/lib/media-file-download.test.ts > captured gateway file download > reports an unavailable desktop bridge 6ms
+ ✓ |ui| src/lib/media-file-download.test.ts > captured gateway file download > rejects an absent stored path before invoking the bridge 1ms
+ ✓ |ui| src/lib/media-file-download.test.ts > captured gateway file download > confirms a completed save and stays quiet on cancel 0ms
+ ✓ |ui| src/lib/media-file-download.test.ts > captured gateway file download > preserves legacy primary routing instead of inventing a default profile 1ms
+ ✓ |ui| src/lib/media-file-download.test.ts > captured gateway file download > keeps explicit local ownership even after switching to a remote 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > detects a bare slash trigger with an empty query 1ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > detects a slash command query 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > detects a bare at-mention trigger with an empty query 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > detects an at-mention query 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > returns null for plain text 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > keeps the slash trigger live while typing args 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > does not treat file-style paths as slash triggers 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > keeps the at-mention live while walking into subfolders 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > treats a chip edge as a token boundary, like whitespace 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > splits a typed ref kind off as the browse scope 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > only treats a KNOWN kind as a scope 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > still ends the at-mention token at whitespace 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > treats a mid-message slash as an inline reference 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > does not carry arg completion into an inline slash reference 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > detectTrigger > still anchors at-mention triggers strictly at the token edge 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > extractClipboardImageBlobs > dedupes the same image exposed on both items and files 1ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > extractClipboardImageBlobs > falls back to files when items has no image 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > extractClipboardImageBlobs > ignores inline HTML images when the copy carries its own text 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > extractClipboardImageBlobs > keeps inline HTML images when the copy is image-only 1ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > extractClipboardImageBlobs > drops sub-thumbnail inline images — spacers, trackers, blurhash placeholders 0ms
+ ✓ |ui| src/app/chat/composer/text-utils.test.ts > blobDedupeKey > uses file metadata for File blobs 0ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > renders block and inline math through KaTeX 50ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > renders GFM tables with header and body cells 8ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > renders images with alt text 5ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > opens an https link in the in-app browser instead of a blank window 97ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > scrolls a table-of-contents link to its heading without changing the app route 10ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > scrolls to a heading whose TOC link uses a different Unicode normalization 9ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > opens a relative markdown link as the sibling file 56ms
+ ✓ |ui| src/app/chat/right-rail/preview-file.test.tsx > MarkdownPreview > does not navigate a scriptable link 3ms
+ ✓ |ui| src/plugins/kanban/attachment.test.tsx > shows missing material metadata and disables both operations without filesystem fallback 65ms
+ ✓ |ui| src/plugins/kanban/comment-thread.test.tsx > keeps independent disclosures and selection while making clipped links inert 94ms
+ ✓ |ui| src/plugins/kanban/attachment.test.tsx > keeps independent saves on the original material without opening its reader 61ms
+ ✓ |ui| src/plugins/kanban/comment-composer.test.tsx > keeps uncertain comments until original-task readback and retries only requeue after a saved note 105ms
+ ✓ |ui| src/plugins/kanban/comment-composer.test.tsx > retains successful image IDs across a partial upload and does not upload removed drafts 40ms
+ ✓ |ui| src/plugins/kanban/attachment.test.tsx > never lets material file links escape its read-only owner across source switches or disconnect 87ms
+ ✓ |ui| src/plugins/kanban/comment-composer.test.tsx > preserves a pending original draft across remount and recovers only the unfinished requeue 75ms
+ ✓ |ui| src/plugins/kanban/comment-composer.test.tsx > identifies renamed committed images by original bytes rather than a same-sized unrelated upload 19ms
+ ✓ |ui| src/plugins/kanban/comment-thread.test.tsx > requires confirmation to reveal a filtered original floor and never selects it as context 150ms
+ ✓ |ui| src/plugins/kanban/assignee-menu.test.tsx > makes same-person selection inert and requires explicit confirmation before reassigning a running task 208ms
+ ✓ |ui| src/plugins/kanban/assignee-menu.test.tsx > lets failed and empty rosters refresh and keeps the current person on an assignment permission failure 92ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > downloads the persisted attachment through its original remote owner 238ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > keeps a local-backend attachment on this computer after switching to a remote 110ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > disables downloads with no persisted path instead of guessing a workspace path 58ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > reports a failed download and allows retry 162ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > disables a pending download and treats save-dialog cancellation quietly 61ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > keeps older task details usable without attachment controls ({}) 68ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > keeps older task details usable without attachment controls ({"attachments":null}) 60ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task attachment compatibility > keeps upload and attachment rendering working for a supported empty list 54ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task modal dialog > is a modal dialog named by the task title that Esc dismisses 33ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task modal dialog > posts a comment from the named icon action in the field 40ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task modal dialog > shows the workspace path as its own value, not prefixed with the raw kind 45ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task modal dialog > renders description and comments as markdown, not raw source 32ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > task modal dialog > does not repeat the active feed tab as a heading above the tab strip 32ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > dependency chips resolve titles > renders linked task titles, not raw ids, and opens on click 38ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > dependency chips resolve titles > falls back to short ids when the backend omits link_tasks 37ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > blocked task detail > renders the block kind, recurrences, failures and last error the API returns 65ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > blocked task detail > hides block detail on legacy payloads and recovered tasks 38ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > blocked task detail > does not present a retained block kind as current after recovery 37ms
+ ✓ |ui| src/plugins/kanban/drawer.test.tsx > blocked task detail > fires the diagnostic unblock action as a PATCH to ready 48ms
+
+ Test Files  9 passed (9)
+      Tests  82 passed (82)
+   Start at  15:56:02
+   Duration  8.63s (transform 28.40s, setup 1.46s, import 41.05s, tests 2.53s, environment 3.47s)
+

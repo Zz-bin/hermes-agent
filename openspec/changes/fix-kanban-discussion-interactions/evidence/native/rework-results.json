@@ -1,0 +1,75 @@
+{
+  "scope": "Chrome actual candidate components with isolated HTTP responses; no real API/database or installed Electron acceptance",
+  "checks": [
+    "initial material read only once through captured original owner",
+    "local/builder/available relative is explicitly disabled without browser href",
+    "local/builder/available absolute is explicitly disabled without browser href",
+    "local/builder/available file is explicitly disabled without browser href",
+    "local/builder/available preview is explicitly disabled without browser href",
+    "no global preview, edit or save on local/builder/false",
+    "remote/reviewer/available relative is explicitly disabled without browser href",
+    "remote/reviewer/available absolute is explicitly disabled without browser href",
+    "remote/reviewer/available file is explicitly disabled without browser href",
+    "remote/reviewer/available preview is explicitly disabled without browser href",
+    "no global preview, edit or save on remote/reviewer/false",
+    "local/builder/available relative is explicitly disabled without browser href",
+    "local/builder/available absolute is explicitly disabled without browser href",
+    "local/builder/available file is explicitly disabled without browser href",
+    "local/builder/available preview is explicitly disabled without browser href",
+    "no global preview, edit or save on local/builder/false",
+    "remote/reviewer/disconnected relative is explicitly disabled without browser href",
+    "remote/reviewer/disconnected absolute is explicitly disabled without browser href",
+    "remote/reviewer/disconnected file is explicitly disabled without browser href",
+    "remote/reviewer/disconnected preview is explicitly disabled without browser href",
+    "no global preview, edit or save on remote/reviewer/true",
+    "blocked file navigation makes no subsequent filesystem request",
+    "in-note heading navigation keeps route and no global preview",
+    "https remains a webpage and cannot become editable file preview",
+    "no browser script errors"
+  ],
+  "requests": [
+    {
+      "port": "43312",
+      "path": "/fixture-info",
+      "profile": null,
+      "method": "GET"
+    },
+    {
+      "port": "43312",
+      "path": "/api/plugins/kanban/boards",
+      "profile": "default",
+      "method": "GET"
+    },
+    {
+      "port": "43312",
+      "path": "/api/plugins/kanban/tasks/isolated-rework",
+      "profile": "default",
+      "method": "GET"
+    },
+    {
+      "port": "43312",
+      "path": "/api/plugins/kanban/tasks/isolated-rework/log",
+      "profile": "default",
+      "method": "GET"
+    },
+    {
+      "port": "43312",
+      "path": "/api/plugins/kanban/board",
+      "profile": "default",
+      "method": "GET"
+    },
+    {
+      "port": "43312",
+      "path": "/api/plugins/kanban/profiles",
+      "profile": "default",
+      "method": "GET"
+    },
+    {
+      "port": "43312",
+      "path": "/api/fs/read-text",
+      "profile": "default",
+      "method": "GET"
+    }
+  ],
+  "errors": []
+}
