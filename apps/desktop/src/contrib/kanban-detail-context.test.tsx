@@ -7,7 +7,7 @@ import { I18nProvider } from '@/i18n'
 import { TaskDrawer } from '../plugins/kanban/drawer'
 import { en } from '../plugins/kanban/i18n'
 import type * as KanbanI18n from '../plugins/kanban/i18n'
-import type { KanbanTaskDetail } from '../plugins/kanban/types'
+import type { fetchTask } from '../plugins/kanban/api'
 
 const mocks = vi.hoisted(() => ({
   fetchTask: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock('../plugins/kanban/i18n', async () => {
 
 const longBody = 'Description retains original content.\n'.repeat(30) + 'END-OF-DESCRIPTION'
 
-function detail(id: string): KanbanTaskDetail & { downloadAttachment: typeof mocks.download } {
+function detail(id: string): Awaited<ReturnType<typeof fetchTask>> {
   return {
     task: { id, title: `Task ${id}`, status: 'blocked', assignee: 'current-owner', body: longBody, created_at: 1 },
     comments: [
@@ -81,7 +81,23 @@ function detail(id: string): KanbanTaskDetail & { downloadAttachment: typeof moc
     events: [],
     runs: [],
     links: { parents: [], children: [] },
-    downloadAttachment: mocks.download
+    downloadAttachment: mocks.download,
+    reader: {
+      key: 'test-source',
+      owner: { connectionId: 'test-source', profile: undefined },
+      readText: vi.fn(),
+      readDataUrl: vi.fn(async () => 'data:image/svg+xml;base64,PHN2Zy8+')
+    },
+    actions: {
+      sourceKey: 'test-source',
+      profiles: async () => ({ profiles: [] }),
+      read: async () => detail(id),
+      readAttachment: vi.fn(),
+      comment: vi.fn(),
+      upload: vi.fn(),
+      requeue: vi.fn(),
+      reassign: vi.fn()
+    }
   }
 }
 
@@ -140,7 +156,7 @@ describe('native TaskDrawer comment inspection', () => {
     expect(screen.getAllByRole('button', { name: en.editDescription })).toHaveLength(1)
     expect(within(context()).getByText('first.svg')).toBeTruthy()
     expect(within(context()).queryByText('second.svg')).toBeNull()
-    fireEvent.click(within(context()).getByRole('button', { name: /first.svg/ }))
+    fireEvent.click(within(context()).getByRole('button', { name: 'Download first.svg' }))
     await waitFor(() => expect(mocks.download).toHaveBeenCalledWith('/test/first.svg', 'first.svg'))
     fireEvent.click(screen.getByRole('button', { name: en.clearCommentSelection }))
     expect(context().dataset.commentContext).toBe('2')
