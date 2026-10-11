@@ -95,6 +95,7 @@ export function CommentThread({
   }, [shown])
 
   const locate = (id: string) => {
+    onChange({ ...selection, selected: id })
     markLocated(id)
     setExpanded(previous => new Set([...previous, id]))
     setHighlighted(id)
@@ -190,7 +191,18 @@ export function CommentThread({
                 data-comment-id={id}
                 data-highlighted={highlighted === id || undefined}
                 key={id}
-                onClick={() => setHighlighted(id)}
+                onClick={event => {
+                  setHighlighted(id)
+
+                  // Inline controls keep their own action; reading the body selects its context.
+                  if (
+                    !(event.target as Element).closest(
+                      'button, a, input, textarea, select, [role="button"], [contenteditable="true"]'
+                    )
+                  ) {
+                    onChange({ ...selection, selected: id })
+                  }
+                }}
                 onFocus={() => setHighlighted(id)}
                 tabIndex={-1}
               >

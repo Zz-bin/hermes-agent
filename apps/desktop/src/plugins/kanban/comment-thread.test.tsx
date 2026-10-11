@@ -55,13 +55,13 @@ it('keeps card-local floor numbers through sorting and filters and locates by or
   expect(container.querySelector('[data-comment-id="11"] button[aria-pressed]')?.textContent).toContain('#1')
   fireEvent.click(container.querySelector('[data-floor-id="11"]')!)
   expect(container.querySelector('[data-comment-id="11"]')?.hasAttribute('data-highlighted')).toBe(true)
-  expect(change).not.toHaveBeenCalled()
+  expect(change).toHaveBeenLastCalledWith({ author: '', order: 'newest', selected: '11' })
   rerender(<CommentThread {...props} selection={{ author: 'reviewer', order: 'oldest', selected: null }} />)
   expect(container.querySelector('[data-floor-id="11"]')).toBeNull()
   expect(container.querySelector('[data-comment-id="35"] button[aria-pressed]')?.textContent).toContain('#2')
 })
 
-it('highlights the comment body on click and transfers the same highlight on focus without changing context', () => {
+it('selects the comment body on click while focus alone only transfers the highlight', () => {
   const change = vi.fn()
 
   const { container } = render(
@@ -82,7 +82,7 @@ it('highlights the comment body on click and transfers the same highlight on foc
   fireEvent.focus(second.querySelector('button[aria-expanded]')!)
   expect(first.hasAttribute('data-highlighted')).toBe(false)
   expect(second.hasAttribute('data-highlighted')).toBe(true)
-  expect(change).not.toHaveBeenCalled()
+  expect(change).toHaveBeenCalledExactlyOnceWith({ author: '', order: 'oldest', selected: '11' })
 })
 
 it('bounds folded Markdown work and defers unseen discussions while preserving the full source on expansion', () => {
