@@ -1,7 +1,6 @@
 import { chromium } from '/home/capz/worktrees/hermes-kanban-detail/node_modules/playwright/index.mjs'
-import {mkdir,writeFile} from 'node:fs/promises'
-const root=new URL(process.env.PRODUCT_OUTPUT_DIR??'.',import.meta.url).pathname
-await mkdir(root,{recursive:true})
+import {writeFile} from 'node:fs/promises'
+const root=new URL('.',import.meta.url).pathname
 const browser=await chromium.launch({headless:true,executablePath:'/opt/google/chrome/chrome'})
 const page=await browser.newPage({viewport:{width:1234,height:870}})
 const results=[],errors=[]

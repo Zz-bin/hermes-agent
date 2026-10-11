@@ -17,5 +17,3 @@
 证据与验收映射：evidence/implementation.md、product-checks.log、product-results.json。准确待审提交及阶段交接由主卡t_e7be9126的开发交付评论记录；本清单完成不表示审查或发布获准。
 
 第一轮返工：reviewer评论115指出按钮焦点实际键盘滚动未解除定位锁，已重新打开1.2/3.1并修复验证后完成；证据evidence/rework.md、keyboard-base-results.json、keyboard-results.json、rework-checks.log、rework-product-results.json。新提交须独立复审，不归档。
-
-第二轮返工：reviewer评论117指出Space激活收起后的布局位移误解除定位锁，重新打开1.2/3.1后修复并验证；证据evidence/rework-round2.md、activation-base-results.json、activation-results.json、round2-keyboard-results.json、round2-checks.log、round2-product/product-results.json。保留分页键修正，新target同卡独立复审，不安装归档。

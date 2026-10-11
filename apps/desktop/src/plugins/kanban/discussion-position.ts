@@ -144,19 +144,7 @@ export function useDiscussionPosition(
     }
 
     const key = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement
-
-      // Space activates buttons: disclosure reflow is not a reading scroll, even at the scroll limit.
-      if (
-        (event.key === ' ' && target.closest('button, [role="button"]')) ||
-        (event.key === 'Enter' && target.closest('button, a, [role="button"]'))
-      ) {
-        intentUntil = 0
-
-        return
-      }
-
-      // Buttons and links can still page the main column with unconsumed scrolling keys.
+      // Buttons and links can page the main column; only a subsequent displacement releases the lock.
       if (
         !event.defaultPrevented &&
         ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)

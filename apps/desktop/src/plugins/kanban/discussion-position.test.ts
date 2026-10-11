@@ -115,38 +115,6 @@ it('releases located floors only for unconsumed keyboard intent followed by main
       expect(hook.result.current.active).toBe('second')
     }
 
-    for (const kind of ['button', 'role-button', 'link']) {
-      const control = document.createElement(kind === 'link' ? 'a' : kind === 'button' ? 'button' : 'div')
-
-      if (kind === 'role-button') {
-        control.setAttribute('role', 'button')
-      }
-
-      const label = document.createElement('span')
-      control.append(label)
-      first.append(control)
-
-      for (const key of kind === 'link' ? ['Enter'] : [' ', 'Enter']) {
-        reset()
-        // A previous no-op paging key must not taint the activation's geometry change.
-        fireEvent.keyDown(control, { key: 'PageDown' })
-        fireEvent.keyDown(label, { key })
-        scroller.scrollTop = 200
-        fireEvent.scroll(scroller)
-        flush()
-        expect(hook.result.current.active).toBe('first')
-      }
-
-      if (kind === 'link') {
-        reset()
-        fireEvent.keyDown(label, { key: ' ' })
-        scroller.scrollTop = 200
-        fireEvent.scroll(scroller)
-        flush()
-        expect(hook.result.current.active).toBe('second')
-      }
-    }
-
     for (const kind of ['textarea', 'input', 'select', 'editable', 'directory', 'preview', 'consumed']) {
       const control = document.createElement(['textarea', 'input', 'select'].includes(kind) ? kind : 'div')
 
