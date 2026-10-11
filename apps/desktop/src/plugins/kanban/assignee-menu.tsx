@@ -61,7 +61,7 @@ export function AssigneeMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button aria-label={k.assignee} disabled={mutation.isPending} size="xs" variant="ghost">
+          <Button aria-label={k.assignee} className="h-6" disabled={mutation.isPending} size="xs" variant="ghost">
             {current && <Avatar name={current} size="0.875rem" />}
             <span className="max-w-32 truncate">{current || k.unassigned}</span>
             <Codicon name="chevron-down" size="0.65rem" />

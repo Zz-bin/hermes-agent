@@ -207,7 +207,7 @@ export function StatusMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[0.6875rem] font-semibold uppercase tracking-wide transition-[filter] hover:brightness-105"
+          className="inline-flex h-6 items-center gap-1 rounded px-2 text-[0.6875rem] leading-4 font-semibold uppercase tracking-wide transition-[filter] hover:brightness-105"
           style={{ backgroundColor: `color-mix(in srgb, ${meta.tone} 15%, transparent)`, color: meta.tone }}
           type="button"
         >
