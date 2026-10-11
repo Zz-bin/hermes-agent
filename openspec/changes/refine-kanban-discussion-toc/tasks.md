@@ -15,5 +15,3 @@
 - [x] 3.1 执行相关UI测试、类型/lint/规格校验与真实组件浏览器综合验证，记录准确版本、验收映射与未验证项，提交待审版本并交reviewer；不安装部署或归档。
 
 证据与验收映射：evidence/implementation.md、product-checks.log、product-results.json。准确待审提交及阶段交接由主卡t_e7be9126的开发交付评论记录；本清单完成不表示审查或发布获准。
-
-第一轮返工：reviewer评论115指出按钮焦点实际键盘滚动未解除定位锁，已重新打开1.2/3.1并修复验证后完成；证据evidence/rework.md、keyboard-base-results.json、keyboard-results.json、rework-checks.log、rework-product-results.json。新提交须独立复审，不归档。

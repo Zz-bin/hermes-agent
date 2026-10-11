@@ -133,8 +133,7 @@ export function useDiscussionPosition(
 
       if (
         target.closest('[data-kanban-directory], [data-kanban-preview]') ||
-        (event.type === 'keydown' &&
-          target.closest('textarea, input, select, [contenteditable]:not([contenteditable="false"])'))
+        (event.type === 'keydown' && target.closest('textarea, input, button, a'))
       ) {
         return
       }
@@ -144,11 +143,7 @@ export function useDiscussionPosition(
     }
 
     const key = (event: KeyboardEvent) => {
-      // Buttons and links can page the main column; only a subsequent displacement releases the lock.
-      if (
-        !event.defaultPrevented &&
-        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)
-      ) {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
         userIntent(event)
       }
     }

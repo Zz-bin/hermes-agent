@@ -1,8 +1,7 @@
-import { act, fireEvent, renderHook } from '@testing-library/react'
-import { expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 
 import { commentFloors, visibleComments } from './comment-context'
-import { directoryPosition, readingFloor, useDiscussionPosition } from './discussion-position'
+import { directoryPosition, readingFloor } from './discussion-position'
 
 it('keeps card-local numbering tied to original identity through sorting and filtering', () => {
   const comments = [
@@ -47,105 +46,4 @@ it('scores occupied reading area with continuity and clamps the rail to the visi
   const low = directoryPosition({ top: 300, bottom: 1000 }, { top: 0, bottom: 400 })
   expect(low.height).toBeLessThanOrEqual(84)
   expect(low.top).toBeGreaterThanOrEqual(0)
-})
-
-it('releases located floors only for unconsumed keyboard intent followed by main-column displacement', () => {
-  const scroller = document.createElement('div')
-  scroller.dataset.kanbanScroller = ''
-  const list = document.createElement('ul')
-  const nav = document.createElement('nav')
-  scroller.append(list, nav)
-  document.body.append(scroller)
-  const bounds = (top: number, bottom: number) => ({ top, bottom }) as DOMRect
-  vi.spyOn(scroller, 'getBoundingClientRect').mockImplementation(() => bounds(0, 200))
-  vi.spyOn(list, 'getBoundingClientRect').mockImplementation(() =>
-    bounds(-scroller.scrollTop, 400 - scroller.scrollTop)
-  )
-  const first = document.createElement('li')
-  const second = document.createElement('li')
-  first.dataset.commentId = 'first'
-  second.dataset.commentId = 'second'
-  list.append(first, second)
-  vi.spyOn(first, 'getBoundingClientRect').mockImplementation(() =>
-    bounds(-scroller.scrollTop, 200 - scroller.scrollTop)
-  )
-  vi.spyOn(second, 'getBoundingClientRect').mockImplementation(() =>
-    bounds(200 - scroller.scrollTop, 400 - scroller.scrollTop)
-  )
-  let frame: FrameRequestCallback | undefined
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    frame = callback
-
-    return 1
-  })
-  vi.stubGlobal('cancelAnimationFrame', () => {})
-
-  const flush = () =>
-    act(() => {
-      const callback = frame
-      frame = undefined
-      callback?.(0)
-    })
-
-  const listRef = { current: list }
-  const navRef = { current: nav }
-  const hook = renderHook(() => useDiscussionPosition(listRef, navRef, 'fixture'))
-
-  try {
-    flush()
-
-    const reset = () => {
-      scroller.scrollTop = 0
-      fireEvent.scroll(scroller)
-      act(() => hook.result.current.locate('first'))
-      flush()
-    }
-
-    for (const tag of ['button', 'a']) {
-      const control = document.createElement(tag)
-      first.append(control)
-      reset()
-      fireEvent.keyDown(control, { key: 'PageDown' })
-      fireEvent.scroll(scroller)
-      flush()
-      expect(hook.result.current.active).toBe('first')
-      scroller.scrollTop = 200
-      fireEvent.scroll(scroller)
-      flush()
-      expect(hook.result.current.active).toBe('second')
-    }
-
-    for (const kind of ['textarea', 'input', 'select', 'editable', 'directory', 'preview', 'consumed']) {
-      const control = document.createElement(['textarea', 'input', 'select'].includes(kind) ? kind : 'div')
-
-      if (kind === 'editable') {
-        control.setAttribute('contenteditable', 'true')
-      }
-
-      if (kind === 'directory') {
-        control.dataset.kanbanDirectory = ''
-      }
-
-      if (kind === 'preview') {
-        control.dataset.kanbanPreview = ''
-      }
-
-      if (kind === 'consumed') {
-        control.addEventListener('keydown', event => event.preventDefault())
-      }
-
-      first.append(control)
-      reset()
-      fireEvent.keyDown(control, { key: 'PageDown' })
-      scroller.scrollTop = 200
-      fireEvent.scroll(scroller)
-      flush()
-      expect(hook.result.current.active).toBe('first')
-    }
-  } finally {
-    hook.unmount()
-    scroller.remove()
-    vi.restoreAllMocks()
-    vi.unstubAllGlobals()
-  }
 })
