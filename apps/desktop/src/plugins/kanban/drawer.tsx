@@ -1116,7 +1116,11 @@ export function TaskDrawer({
                           {snapshot?.material_paths?.map(path => (
                             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-1" key={path}>
                               <Attachment
-                                attachment={{ id: path, filename: path, stored_path: path }}
+                                attachment={{
+                                  id: path,
+                                  filename: path.split(/[\\/]/).filter(Boolean).at(-1) ?? path,
+                                  stored_path: path
+                                }}
                                 onDownload={detail.downloadAttachment}
                                 reader={detail.reader}
                               />
