@@ -1,7 +1,8 @@
 import { Badge, Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@hermes/plugin-sdk'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
-import { isHandoff, visibleComments } from './comment-context'
+import { commentFloors, isHandoff, visibleComments } from './comment-context'
+import { useDiscussionPosition } from './discussion-position'
 import { discussionScroller } from './discussion-scroll'
 import { FloorDirectory } from './floor-directory'
 import { TextDisclosure } from './text-disclosure'
@@ -32,12 +33,16 @@ export function CommentThread({
   const [located, setLocated] = useState<{ id: string } | null>(null)
   const [highlighted, setHighlighted] = useState<string | null>(null)
   const list = useRef<HTMLUListElement>(null)
+  const nav = useRef<HTMLElement>(null)
+  const floors = useMemo(() => commentFloors(comments), [comments])
   const authors = [...new Set(comments.map(comment => comment.author))].sort()
 
   const shown = useMemo(
     () => visibleComments(comments, selection.author, selection.order),
     [comments, selection.author, selection.order]
   )
+
+  const { active, locate: markLocated } = useDiscussionPosition(list, nav, shown)
 
   const [visibleBodies, setVisibleBodies] = useState<Set<string>>(new Set())
 
@@ -90,6 +95,7 @@ export function CommentThread({
   }, [shown])
 
   const locate = (id: string) => {
+    markLocated(id)
     setExpanded(previous => new Set([...previous, id]))
     setHighlighted(id)
     setLocated({ id })
@@ -165,14 +171,7 @@ export function CommentThread({
         )}
       </div>
       <div className="kanban-discussion relative flex min-w-0 gap-3">
-        <FloorDirectory
-          comments={comments}
-          k={k}
-          list={list}
-          onLocate={locate}
-          onShowAll={() => onChange({ ...selection, author: '' })}
-          selection={selection}
-        />
+        <FloorDirectory active={active} comments={shown} floors={floors} k={k} nav={nav} onLocate={locate} />
         <ul className="flex min-w-0 flex-1 flex-col gap-5" ref={list}>
           {!shown.length && <li className="text-[0.75rem] text-(--ui-text-tertiary)">{k.noComments}</li>}
           {shown.map((comment, index) => {
@@ -196,14 +195,14 @@ export function CommentThread({
                 tabIndex={-1}
               >
                 <Button
-                  aria-label={`${k.selectComment} #${id} ${comment.author}`}
+                  aria-label={`${k.selectComment} #${floors.get(id)} ${comment.author}`}
                   aria-pressed={selected}
                   className="flex w-full flex-wrap items-center justify-start gap-2 text-left text-[0.75rem]"
                   onClick={() => onChange({ ...selection, selected: selected ? null : id })}
                   size="inline"
                   variant="text"
                 >
-                  <span className="font-mono font-semibold text-(--ui-text-secondary)">#{id}</span>
+                  <span className="font-mono font-semibold text-(--ui-text-secondary)">#{floors.get(id)}</span>
                   <span className="font-medium text-(--ui-text-secondary)">{comment.author}</span>
                   <Badge size="xs" variant="muted">
                     {isHandoff(comment) ? k.handoff : k.discussion}

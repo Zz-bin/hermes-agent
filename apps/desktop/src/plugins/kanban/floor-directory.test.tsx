@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
+import { useDiscussionPosition } from './discussion-position'
 import { FloorDirectory } from './floor-directory'
 import { en } from './i18n'
 
@@ -64,6 +65,14 @@ function flushFrame() {
 
 function View() {
   const list = useRef<HTMLUListElement>(null)
+  const nav = useRef<HTMLElement>(null)
+
+  const comments = [
+    { id: 1, author: 'builder', body: 'One', created_at: 0 },
+    { id: 2, author: 'builder', body: 'Two', created_at: 1 }
+  ]
+
+  const { active } = useDiscussionPosition(list, nav, comments)
 
   return (
     <>
@@ -71,15 +80,17 @@ function View() {
       <div data-kanban-scroller data-testid="outer" style={{ overflowY: 'hidden' }}>
         <div data-kanban-scroller data-testid="inner" style={{ overflowY: 'auto' }}>
           <FloorDirectory
-            comments={[
-              { id: 1, author: 'builder', body: 'One', created_at: 0 },
-              { id: 2, author: 'builder', body: 'Two', created_at: 1 }
-            ]}
+            active={active}
+            comments={comments}
+            floors={
+              new Map([
+                ['1', 1],
+                ['2', 2]
+              ])
+            }
             k={en}
-            list={list}
+            nav={nav}
             onLocate={vi.fn()}
-            onShowAll={vi.fn()}
-            selection={{ author: '', order: 'oldest', selected: null }}
           />
           <ul ref={list}>
             <li data-comment-id="1" />
@@ -93,6 +104,7 @@ function View() {
 
 it('coalesces relevant scroll and resize measurements while ignoring unrelated scrolling', () => {
   render(<View />)
+  flushFrame()
   const inner = screen.getByTestId('inner')
   const list = inner.querySelector('ul')!
   const layout = vi.fn(list.getBoundingClientRect.bind(list))
@@ -109,10 +121,10 @@ it('coalesces relevant scroll and resize measurements while ignoring unrelated s
   expect(layout).toHaveBeenCalledTimes(1)
   expect(nodes).not.toHaveBeenCalled()
   expect(style).not.toHaveBeenCalled()
-  expect(screen.getByRole('button', { name: '#1 builder' }).getAttribute('aria-current')).toBe('location')
+  expect(screen.getByRole('button', { name: '#2 builder' }).getAttribute('aria-current')).toBe('location')
   const firstFloor = list.querySelector<HTMLElement>('[data-comment-id="1"]')!
   Object.defineProperty(firstFloor, 'getBoundingClientRect', {
-    value: () => ({ bottom: -1 }),
+    value: () => ({ top: -80, bottom: -1 }),
     configurable: true
   })
   layout.mockClear()
@@ -129,6 +141,7 @@ it('coalesces relevant scroll and resize measurements while ignoring unrelated s
 
 it('reselects the scroll container after responsive layout changes and cancels queued work on unmount', () => {
   const { unmount } = render(<View />)
+  flushFrame()
   const inner = screen.getByTestId('inner')
   const outer = screen.getByTestId('outer')
   inner.style.overflowY = 'hidden'

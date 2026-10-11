@@ -1,8 +1,7 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { useState } from 'react'
+import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 
-import { type CommentSelection, CommentThread } from './comment-thread'
+import { CommentThread } from './comment-thread'
 import { en } from './i18n'
 import type { KanbanComment } from './types'
 
@@ -44,57 +43,22 @@ it('keeps independent disclosures and selection while making clipped links inert
   expect(change).not.toHaveBeenCalled()
 })
 
-it('requires confirmation to reveal a filtered original floor and never selects it as context', async () => {
-  const changes = vi.fn()
+it('keeps card-local floor numbers through sorting and filters and locates by original identity', () => {
+  const change = vi.fn()
+  const props = { comments, k: en, onChange: change, renderBody: (body: string) => <p>{body}</p> }
 
-  function View() {
-    const [selection, setSelection] = useState<CommentSelection>({
-      author: 'reviewer',
-      order: 'oldest',
-      selected: '35'
-    })
-
-    return (
-      <CommentThread
-        comments={comments}
-        k={en}
-        onChange={next => {
-          changes(next)
-          setSelection(next)
-        }}
-        renderBody={body => <p>{body}</p>}
-        selection={selection}
-      />
-    )
-  }
-
-  const { container } = render(<View />)
-  const directory = screen.getByRole('button', { name: en.floorDirectory })
-  fireEvent.click(directory)
-  fireEvent.change(screen.getByRole('textbox', { name: en.jumpFloor }), { target: { value: '999' } })
-  fireEvent.submit(screen.getByRole('textbox', { name: en.jumpFloor }).closest('form')!)
-  expect(screen.getAllByText(en.floorMissing).length).toBeGreaterThan(0)
-  fireEvent.change(screen.getByRole('textbox', { name: en.jumpFloor }), { target: { value: '11' } })
-  fireEvent.submit(screen.getByRole('textbox', { name: en.jumpFloor }).closest('form')!)
-  fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }))
-  expect(changes).not.toHaveBeenCalled()
-  expect(container.querySelector('[data-comment-id="11"]')).toBeNull()
-  fireEvent.click(directory)
-  fireEvent.submit(screen.getByRole('textbox', { name: en.jumpFloor }).closest('form')!)
-  fireEvent.click(await screen.findByRole('button', { name: 'Confirm' }))
-  await waitFor(() => expect(container.querySelector('[data-comment-id="11"]')).not.toBeNull())
-  expect(changes).toHaveBeenLastCalledWith({ author: '', order: 'oldest', selected: '35' })
-  expect(container.querySelector('[data-comment-id="11"] button[aria-expanded]')?.getAttribute('aria-expanded')).toBe(
-    'true'
+  const { container, rerender } = render(
+    <CommentThread {...props} selection={{ author: '', order: 'newest', selected: null }} />
   )
-  expect(container.querySelector('[data-comment-id="11"] button[aria-pressed]')?.getAttribute('aria-pressed')).toBe(
-    'false'
-  )
+
+  expect(container.querySelector('[data-comment-id="35"] button[aria-pressed]')?.textContent).toContain('#2')
+  expect(container.querySelector('[data-comment-id="11"] button[aria-pressed]')?.textContent).toContain('#1')
+  fireEvent.click(container.querySelector('[data-floor-id="11"]')!)
   expect(container.querySelector('[data-comment-id="11"]')?.hasAttribute('data-highlighted')).toBe(true)
-  const otherDisclosure = container.querySelector<HTMLButtonElement>('[data-comment-id="35"] button[aria-expanded]')!
-  otherDisclosure.focus()
-  fireEvent.click(otherDisclosure)
-  expect(otherDisclosure.ownerDocument.activeElement).toBe(otherDisclosure)
+  expect(change).not.toHaveBeenCalled()
+  rerender(<CommentThread {...props} selection={{ author: 'reviewer', order: 'oldest', selected: null }} />)
+  expect(container.querySelector('[data-floor-id="11"]')).toBeNull()
+  expect(container.querySelector('[data-comment-id="35"] button[aria-pressed]')?.textContent).toContain('#2')
 })
 
 it('highlights the comment body on click and transfers the same highlight on focus without changing context', () => {

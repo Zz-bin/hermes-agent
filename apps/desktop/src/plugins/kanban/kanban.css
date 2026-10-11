@@ -45,22 +45,45 @@
   }
 }
 
-/* Stack the native columns only when space is scarce. */
+.kanban-discussion {
+  padding-left: 36px;
+}
+.kanban-detail-pane-switch {
+  display: none;
+}
+.kanban-composer {
+  max-height: 45vh;
+  overflow-y: auto;
+}
+.kanban-feed-content {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.kanban-feed-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 4rem;
+}
+.kanban-log {
+  font-size: inherit;
+}
+
 .kanban-floor-directory {
-  position: sticky;
-  top: 0.5rem;
-  align-self: flex-start;
+  position: absolute;
+  left: 0;
+  visibility: hidden;
   width: 1.5rem;
   flex-shrink: 0;
 }
 .kanban-floor-lines {
+  height: 100%;
   overflow-y: auto;
   scrollbar-width: none;
 }
 .kanban-floor-line {
   display: flex;
   align-items: center;
-  height: 12px;
+  height: 24px;
+  min-width: 24px;
   width: 100%;
 }
 .kanban-floor-line span {
@@ -91,19 +114,19 @@
   }
 }
 @media (max-width: 700px) {
-  .kanban-detail-columns {
-    flex-direction: column;
-    overflow-y: auto;
+  .kanban-detail-pane-switch {
+    display: block;
   }
-  .kanban-detail-columns > div {
-    flex: none;
-    overflow-y: visible;
+  .kanban-detail-columns[data-pane='materials'] .kanban-detail-main,
+  .kanban-detail-columns[data-pane='discussion'] .kanban-detail-sidebar {
+    display: none;
+  }
+  .kanban-detail-columns {
+    overflow: hidden;
   }
   .kanban-detail-sidebar {
     width: 100%;
-    overflow-y: visible;
+    min-height: 0;
     border-left: 0;
-    border-top: 1px solid var(--ui-stroke-tertiary);
-    padding-top: 1rem;
   }
 }
