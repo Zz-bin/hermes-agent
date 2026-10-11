@@ -115,8 +115,7 @@
   background: var(--ui-stroke-primary);
   transition: width 120ms ease;
 }
-.kanban-floor-line[aria-current] span {
-  width: 18px;
+.kanban-floor-line[data-highlighted] span {
   background: var(--ui-accent);
 }
 .kanban-floor {

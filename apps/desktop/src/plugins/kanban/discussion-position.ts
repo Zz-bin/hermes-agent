@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useRef, useState } from 'react'
+import { type RefObject, useEffect, useState } from 'react'
 
 import { discussionScroller } from './discussion-scroll'
 import type { KanbanComment } from './types'
@@ -9,29 +9,10 @@ interface FloorBounds {
   bottom: number
 }
 
-export function readingFloor(floors: FloorBounds[], top: number, bottom: number, current: string | null) {
-  const candidates = floors
-    .flatMap(floor => {
-      const visible = Math.min(bottom, floor.bottom) - Math.max(top, floor.top)
-
-      if (visible <= 0 || bottom <= top) {
-        return []
-      }
-
-      return [
-        {
-          ...floor,
-          score: visible / (bottom - top),
-          distance: Math.abs((Math.max(top, floor.top) + Math.min(bottom, floor.bottom)) / 2 - (top + bottom) / 2)
-        }
-      ]
-    })
-    .sort((a, b) => b.score - a.score || a.distance - b.distance)
-
-  const previous = candidates.find(floor => floor.id === current)
-  const best = candidates[0]
-
-  return previous && best.score <= previous.score ? previous.id : (best?.id ?? null)
+export function visibleFloors(floors: FloorBounds[], top: number, bottom: number): string[] {
+  return bottom > top
+    ? floors.filter(floor => Math.min(bottom, floor.bottom) > Math.max(top, floor.top)).map(floor => floor.id)
+    : []
 }
 
 export function directoryPosition(
@@ -47,23 +28,14 @@ export function directoryPosition(
   return { height, top: top - region.top }
 }
 
-/** Navigation intent stays local: geometry updates cannot replace a clicked floor. */
+/** Measure the reading viewport once per frame, independently of comment selection. */
 export function useDiscussionPosition(
   list: RefObject<HTMLUListElement | null>,
   nav: RefObject<HTMLElement | null>,
   comments: KanbanComment[]
 ) {
-  const [active, setActive] = useState<string | null>(null)
-  const activeRef = useRef<string | null>(null)
-  const lock = useRef<string | null>(null)
+  const [visible, setVisible] = useState<string[]>([])
 
-  const locate = (id: string) => {
-    lock.current = id
-    activeRef.current = id
-    setActive(id)
-  }
-
-  // eslint-disable-next-line no-restricted-syntax -- installs DOM listeners owning imperative navigation refs, not mirrored atom values
   useEffect(() => {
     const element = list.current
     const rail = nav.current
@@ -76,9 +48,6 @@ export function useDiscussionPosition(
     let scroller = initialScroller
     const nodes = Array.from(element.querySelectorAll<HTMLElement>('[data-comment-id]'))
     let frame = 0
-    let intentUntil = 0
-    let dragging = false
-    let scrollTop = scroller.scrollTop
 
     const update = () => {
       frame = 0
@@ -96,23 +65,10 @@ export function useDiscussionPosition(
       rail.style.top = `${position.top}px`
       rail.style.height = `${position.height}px`
 
-      if (lock.current && !floors.some(floor => floor.id === lock.current)) {
-        lock.current = null
-      }
-
-      const next =
-        lock.current ??
-        readingFloor(
-          floors,
-          Math.max(region.top, bounds.top),
-          Math.min(region.bottom, bounds.bottom),
-          activeRef.current
-        )
-
-      if (next !== activeRef.current) {
-        activeRef.current = next
-        setActive(next)
-      }
+      const next = visibleFloors(floors, Math.max(region.top, bounds.top), Math.min(region.bottom, bounds.bottom))
+      setVisible(previous =>
+        previous.length === next.length && previous.every((id, index) => id === next[index]) ? previous : next
+      )
     }
 
     const schedule = () => {
@@ -126,80 +82,22 @@ export function useDiscussionPosition(
         return
       }
 
-      if (scroller.scrollTop !== scrollTop) {
-        if (dragging || performance.now() < intentUntil) {
-          lock.current = null
-        }
-
-        intentUntil = 0
-        scrollTop = scroller.scrollTop
-      }
-
       schedule()
     }
 
-    const userIntent = (event: Event) => {
-      const target = event.target as HTMLElement
-
-      if (
-        target.closest('[data-kanban-preview]') ||
-        (event.type === 'keydown' && target.closest('[data-kanban-directory]')) ||
-        (event.type === 'keydown' &&
-          target.closest('textarea, input, select, [contenteditable]:not([contenteditable="false"])'))
-      ) {
-        return
-      }
-
-      intentUntil = performance.now() + 250
-      scrollTop = scroller.scrollTop
-    }
-
-    const key = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement
-
-      // Space activates buttons: disclosure reflow is not a reading scroll, even at the scroll limit.
-      if (
-        (event.key === ' ' && target.closest('button, [role="button"]')) ||
-        (event.key === 'Enter' && target.closest('button, a, [role="button"]'))
-      ) {
-        intentUntil = 0
-
-        return
-      }
-
-      // Buttons and links can still page the main column with unconsumed scrolling keys.
-      if (
-        !event.defaultPrevented &&
-        ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)
-      ) {
-        userIntent(event)
-      }
-    }
-
-    const pointer = (event: PointerEvent) => {
-      if (event.target === scroller) {
-        dragging = true
-        userIntent(event)
-      }
-    }
-
-    const endDrag = () => {
-      dragging = false
-      intentUntil = 0
-    }
-
     const resize = () => {
-      scroller = discussionScroller(element) ?? scroller
-      intentUntil = 0
+      const next = discussionScroller(element) ?? scroller
+
+      if (next !== scroller) {
+        observer.unobserve(scroller)
+        scroller = next
+        observer.observe(scroller)
+      }
+
       schedule()
     }
 
     window.addEventListener('scroll', scroll, { passive: true, capture: true })
-    scroller.addEventListener('wheel', userIntent, { passive: true })
-    scroller.addEventListener('touchmove', userIntent, { passive: true })
-    scroller.addEventListener('keydown', key)
-    scroller.addEventListener('pointerdown', pointer)
-    window.addEventListener('pointerup', endDrag)
     window.addEventListener('resize', resize)
     const observer = new ResizeObserver(schedule)
     observer.observe(element)
@@ -211,14 +109,9 @@ export function useDiscussionPosition(
 
       observer.disconnect()
       window.removeEventListener('scroll', scroll, true)
-      scroller.removeEventListener('wheel', userIntent)
-      scroller.removeEventListener('touchmove', userIntent)
-      scroller.removeEventListener('keydown', key)
-      scroller.removeEventListener('pointerdown', pointer)
-      window.removeEventListener('pointerup', endDrag)
       window.removeEventListener('resize', resize)
     }
   }, [list, nav, comments])
 
-  return { active, locate }
+  return visible
 }

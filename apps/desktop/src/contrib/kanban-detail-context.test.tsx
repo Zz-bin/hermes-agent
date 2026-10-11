@@ -162,7 +162,7 @@ describe('native TaskDrawer comment inspection', () => {
     expect(within(context()).queryByText(en.phase)).toBeNull()
     expect(within(context()).queryByText(en.statusAtHandoff)).toBeNull()
     expect(within(context()).queryByText(en.workspace)).toBeNull()
-    expect(within(context()).getByText('/worktree/design.md')).toBeTruthy()
+    expect(within(context()).getByText('design.md')).toBeTruthy()
     expect(within(context()).queryByText(en.reportedVerification)).toBeNull()
     expect(within(context()).queryByText(en.declaredScope)).toBeNull()
     expect(within(context()).queryByText('VERBATIM VERIFICATION')).toBeNull()

@@ -42,7 +42,7 @@ export function CommentThread({
     [comments, selection.author, selection.order]
   )
 
-  const { active, locate: markLocated } = useDiscussionPosition(list, nav, shown)
+  const visible = useDiscussionPosition(list, nav, shown)
 
   const [visibleBodies, setVisibleBodies] = useState<Set<string>>(new Set())
 
@@ -96,7 +96,6 @@ export function CommentThread({
 
   const locate = (id: string) => {
     onChange({ ...selection, selected: id })
-    markLocated(id)
     setExpanded(previous => new Set([...previous, id]))
     setHighlighted(id)
     setLocated({ id })
@@ -172,7 +171,15 @@ export function CommentThread({
         )}
       </div>
       <div className="kanban-discussion relative flex min-w-0 gap-3">
-        <FloorDirectory active={active} comments={shown} floors={floors} k={k} nav={nav} onLocate={locate} />
+        <FloorDirectory
+          comments={shown}
+          floors={floors}
+          k={k}
+          nav={nav}
+          onLocate={locate}
+          selected={selection.selected}
+          visible={visible}
+        />
         <ul className="flex min-w-0 flex-1 flex-col gap-5" ref={list}>
           {!shown.length && <li className="text-[0.75rem] text-(--ui-text-tertiary)">{k.noComments}</li>}
           {shown.map((comment, index) => {

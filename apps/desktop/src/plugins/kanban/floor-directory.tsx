@@ -6,7 +6,8 @@ import type { KanbanComment } from './types'
 import type { KanbanText } from './ui'
 
 interface FloorDirectoryProps {
-  active: string | null
+  selected: string | null
+  visible: string[]
   comments: KanbanComment[]
   floors: Map<string, number>
   k: KanbanText
@@ -17,7 +18,10 @@ interface FloorDirectoryProps {
 function FloorPreview({
   comment,
   floor,
-  active,
+  selected,
+  highlighted,
+  width,
+  onHighlight,
   open,
   onOpenChange,
   onLocate,
@@ -25,7 +29,10 @@ function FloorPreview({
 }: {
   comment: KanbanComment
   floor: number
-  active: boolean
+  selected: boolean
+  highlighted: boolean
+  width: number
+  onHighlight: () => void
   open: boolean
   onOpenChange: (open: boolean) => void
   onLocate: () => void
@@ -74,17 +81,21 @@ function FloorPreview({
     <Popover onOpenChange={onOpenChange} open={open}>
       <PopoverTrigger asChild>
         <button
-          aria-current={active ? 'location' : undefined}
+          aria-current={selected ? 'location' : undefined}
           aria-label={`#${floor} ${comment.author}`}
           className="kanban-floor-line"
           data-floor-id={String(comment.id)}
+          data-highlighted={highlighted || undefined}
           onBlur={leave}
           onClick={event => {
             event.preventDefault()
             onOpenChange(false)
             onLocate()
           }}
-          onFocus={enter}
+          onFocus={() => {
+            onHighlight()
+            enter()
+          }}
           onKeyDown={event => {
             if (event.key === 'Escape' && open) {
               dismiss(event)
@@ -92,12 +103,15 @@ function FloorPreview({
               onKey(event)
             }
           }}
-          onPointerEnter={enter}
+          onPointerEnter={() => {
+            onHighlight()
+            enter()
+          }}
           onPointerLeave={leave}
           ref={trigger}
           type="button"
         >
-          <span />
+          <span style={{ width }} />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -126,27 +140,42 @@ function FloorPreview({
   )
 }
 
-export function FloorDirectory({ active, comments, floors, k, nav, onLocate }: FloorDirectoryProps) {
+export function FloorDirectory({ selected, visible, comments, floors, k, nav, onLocate }: FloorDirectoryProps) {
   const lines = useRef<HTMLDivElement>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
+  const [hovered, setHovered] = useState<string | null>(null)
+  const hoveredIndex = comments.findIndex(comment => String(comment.id) === hovered)
+  const visibleIds = new Set(visible)
 
   if (!comments.length) {
     return null
   }
 
   return (
-    <nav aria-label={k.floorDirectory} className="kanban-floor-directory" data-kanban-directory ref={nav}>
+    <nav
+      aria-label={k.floorDirectory}
+      className="kanban-floor-directory"
+      data-kanban-directory
+      onBlur={event => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setHovered(null)
+        }
+      }}
+      onPointerLeave={() => setHovered(null)}
+      ref={nav}
+    >
       <div className="kanban-floor-lines" ref={lines}>
         {comments.map((comment, index) => {
           const id = String(comment.id)
 
           return (
             <FloorPreview
-              active={active === id}
               comment={comment}
               floor={floors.get(id)!}
+              highlighted={selected === id || (hoveredIndex < 0 ? visibleIds.has(id) : hovered === id)}
               key={id}
+              onHighlight={() => setHovered(id)}
               onKey={event => {
                 const offsets: Record<string, number> = {
                   ArrowDown: index + 1,
@@ -168,6 +197,8 @@ export function FloorDirectory({ active, comments, floors, k, nav, onLocate }: F
               }}
               onOpenChange={value => setOpenId(previous => (value ? id : previous === id ? null : previous))}
               open={openId === id}
+              selected={selected === id}
+              width={hoveredIndex < 0 ? 10 : 10 + 14 * Math.exp(-0.5 * ((index - hoveredIndex) / 1.6) ** 2)}
             />
           )
         })}
