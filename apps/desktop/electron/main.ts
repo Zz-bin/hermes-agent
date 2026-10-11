@@ -700,6 +700,37 @@ if (USER_DATA_OVERRIDE || process.env.HERMES_DATA_DIR_SUFFIX) {
   app.setPath('userData', resolvedUserData)
 }
 
+// Claim ownership before GPU/sandbox probes write their persistent markers.
+// A second click must only wake the owner, never leave a false aborted-boot marker.
+// Only the lock-owning destination may adopt a workspace or start a backend.
+// #78101: on Linux/X11 a zombie/defunct Electron process leaves the
+// SingletonLock symlink behind with a PID that still answers kill(pid, 0),
+// so Chromium's own liveness probe keeps refusing every later launch and the
+// app silently exits. Clear a provably-dead owner and retry once; always log
+// when the lock is legitimately lost so the exit is diagnosable.
+function acquireSingleInstanceLock(): boolean {
+  if (app.requestSingleInstanceLock()) {
+    return true
+  }
+
+  const stalePid = removeStaleSingletonLock(app.getPath('userData'))
+
+  if (stalePid !== null) {
+    console.error(`[hermes] removed stale SingletonLock (owner ${stalePid} dead); retrying launch`)
+
+    return app.requestSingleInstanceLock()
+  }
+
+  return false
+}
+
+const isPrimaryInstance: boolean = acquireSingleInstanceLock()
+
+if (!isPrimaryInstance) {
+  console.error('[hermes] another Hermes Desktop instance holds the single-instance lock; exiting')
+  app.exit(0)
+}
+
 const DEV_SERVER = process.env.HERMES_DESKTOP_DEV_SERVER
 const IS_PACKAGED = app.isPackaged || Boolean(process.env.HERMES_DESKTOP_IS_PACKAGED)
 const IS_MAC = process.platform === 'darwin'
@@ -1215,35 +1246,6 @@ if (INSTALL_STAMP) {
 }
 
 const DESKTOP_PROFILE_CONFIG_PATH: string = path.join(app.getPath('userData'), 'active-profile.json')
-
-// Only the lock-owning destination may adopt a workspace or start a backend.
-// #78101: on Linux/X11 a zombie/defunct Electron process leaves the
-// SingletonLock symlink behind with a PID that still answers kill(pid, 0),
-// so Chromium's own liveness probe keeps refusing every later launch and the
-// app silently exits. Clear a provably-dead owner and retry once; always log
-// when the lock is legitimately lost so the exit is diagnosable.
-function acquireSingleInstanceLock(): boolean {
-  if (app.requestSingleInstanceLock()) {
-    return true
-  }
-
-  const stalePid = removeStaleSingletonLock(app.getPath('userData'))
-
-  if (stalePid !== null) {
-    console.error(`[hermes] removed stale SingletonLock (owner ${stalePid} dead); retrying launch`)
-
-    return app.requestSingleInstanceLock()
-  }
-
-  return false
-}
-
-const isPrimaryInstance: boolean = acquireSingleInstanceLock()
-
-if (!isPrimaryInstance) {
-  console.error('[hermes] another Hermes Desktop instance holds the single-instance lock; exiting')
-  app.exit(0)
-}
 
 // `hermes desktop` shortens TMPDIR only so the lock above can bind its socket (#124688). The
 // backend and every other child get the real one (the profile scratch dir) back.
