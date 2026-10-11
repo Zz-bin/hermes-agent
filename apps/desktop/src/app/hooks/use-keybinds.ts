@@ -25,7 +25,14 @@ import {
   TAB_SLOT_COUNT
 } from '@/lib/keybinds/actions'
 import { handleApprovalKey, releaseApprovalKey } from '@/lib/keybinds/approval-keys'
-import { actionAllowedInInput, comboFromEvent, IS_MAC, isEditableTarget, isFocusWithin } from '@/lib/keybinds/combo'
+import {
+  actionAllowedInInput,
+  comboFromEvent,
+  IS_MAC,
+  isEditableTarget,
+  isFocusWithin,
+  OVERLAY_SURFACE
+} from '@/lib/keybinds/combo'
 import { composerFocusKeysAllowed, isComposerFocusSoftCombo, typeToFocusChar } from '@/lib/keybinds/composer-focus-keys'
 import { stepReasoningEffort, writeSessionReasoningEffort } from '@/lib/reasoning-step'
 import { openWorktreeDialog } from '@/store/coding-status'
@@ -538,6 +545,14 @@ export function useKeybinds(deps: KeybindRuntimeDeps): void {
       // Actions bound to the chord, in registration order. The first runs; a
       // `passthrough` action that declines hands the chord to the next.
       for (const actionId of actionIds) {
+        // Independent pages and overlays own their native reading scroll.
+        if (
+          (actionId === 'conversation.scrollPageUp' || actionId === 'conversation.scrollPageDown') &&
+          ($workspaceIsPage.get() || document.querySelector(OVERLAY_SURFACE))
+        ) {
+          return
+        }
+
         if (isEditableTarget(event.target) && !actionAllowedInInput(actionId, combo)) {
           return
         }
