@@ -217,7 +217,7 @@ describe('task attachment compatibility', () => {
     expect(screen.getByText(en.noAttachments)).toBeTruthy()
 
     // The modal portals out of the render container; query inside the dialog.
-    const input = screen.getByRole('dialog').querySelector<HTMLInputElement>('aside input[type="file"]')!
+    const input = screen.getByRole('dialog').querySelector<HTMLInputElement>('input[type="file"]')!
     const click = vi.spyOn(input, 'click')
     fireEvent.click(upload)
     expect(click).toHaveBeenCalledOnce()

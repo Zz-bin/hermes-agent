@@ -1,192 +1,272 @@
-import { Popover, PopoverContent, PopoverTrigger } from '@hermes/plugin-sdk'
+import { Button, ConfirmDialog, Input, Popover, PopoverContent, PopoverTrigger } from '@hermes/plugin-sdk'
 import { type RefObject, useEffect, useRef, useState } from 'react'
 
+import { visibleComments } from './comment-context'
+import type { CommentSelection } from './comment-thread'
+import { discussionScroller } from './discussion-scroll'
 import type { KanbanComment } from './types'
 import type { KanbanText } from './ui'
 
 interface FloorDirectoryProps {
-  active: string | null
   comments: KanbanComment[]
-  floors: Map<string, number>
   k: KanbanText
-  nav: RefObject<HTMLElement | null>
+  list: RefObject<HTMLUListElement | null>
+  selection: CommentSelection
+  onShowAll: () => void
   onLocate: (id: string) => void
 }
 
-function FloorPreview({
-  comment,
-  floor,
-  active,
-  onLocate,
-  onKey
-}: {
-  comment: KanbanComment
-  floor: number
-  active: boolean
-  onLocate: () => void
-  onKey: (event: React.KeyboardEvent<HTMLButtonElement>) => void
-}) {
+export function FloorDirectory({ comments, k, list, selection, onShowAll, onLocate }: FloorDirectoryProps) {
   const [open, setOpen] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const [hovered, setHovered] = useState<string | null>(null)
+  const [current, setCurrent] = useState<string | null>(null)
+  const [hidden, setHidden] = useState<string | null>(null)
+  const [number, setNumber] = useState('')
+  const [message, setMessage] = useState('')
+  const [height, setHeight] = useState(180)
+  const [visible, setVisible] = useState(true)
   const trigger = useRef<HTMLButtonElement>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const input = useRef<HTMLInputElement>(null)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const nav = useRef<HTMLElement>(null)
+  const ordered = visibleComments(comments, '', selection.order)
+  const preview = ordered.find(comment => String(comment.id) === (hovered ?? current))
+
+  useEffect(() => {
+    // Pinning an already-hovered portal does not fire its mount autofocus event again.
+    if (pinned && open) {
+      input.current?.focus()
+    }
+  }, [pinned, open])
+
+  useEffect(() => {
+    const element = list.current
+    const scroller = element ? discussionScroller(element) : null
+
+    if (!element || !scroller) {
+      return
+    }
+
+    const update = () => {
+      const bounds = (discussionScroller(element) ?? scroller).getBoundingClientRect()
+      const region = element.getBoundingClientRect()
+      const top = nav.current?.getBoundingClientRect().top ?? bounds.top
+      setVisible(region.bottom > bounds.top && region.top < bounds.bottom)
+      setHeight(Math.max(48, bounds.bottom - Math.max(bounds.top, top) - 8))
+      const floors = Array.from(element.querySelectorAll<HTMLElement>('[data-comment-id]'))
+      const floor = floors.find(item => item.getBoundingClientRect().bottom > bounds.top + 8)
+      setCurrent(floor?.dataset.commentId ?? null)
+    }
+
+    update()
+    window.addEventListener('scroll', update, { passive: true, capture: true })
+    window.addEventListener('resize', update)
+    const observer = new ResizeObserver(update)
+    observer.observe(scroller)
+    observer.observe(element)
+
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+      observer.disconnect()
+    }
+  }, [comments, list, selection.author, selection.order])
+
+  const locate = (id: string) => {
+    const target = comments.find(comment => String(comment.id) === id)
+
+    if (!target) {
+      setMessage(k.floorMissing)
+
+      return
+    }
+
+    if (selection.author && target.author !== selection.author) {
+      setHidden(id)
+
+      return
+    }
+
+    onLocate(id)
+    setOpen(false)
+    setPinned(false)
+    setMessage(`${k.locatedFloor} #${id}`)
+  }
 
   const enter = () => {
-    if (timer.current) {
-      clearTimeout(timer.current)
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current)
     }
 
     setOpen(true)
   }
 
   const leave = () => {
-    if (timer.current) {
-      clearTimeout(timer.current)
+    if (!pinned) {
+      closeTimer.current = setTimeout(() => setOpen(false), 120)
     }
-
-    timer.current = setTimeout(() => setOpen(false), 120)
   }
 
   useEffect(
     () => () => {
-      if (timer.current) {
-        clearTimeout(timer.current)
+      if (closeTimer.current !== null) {
+        clearTimeout(closeTimer.current)
       }
     },
     []
   )
-
-  const dismiss = (event: { preventDefault: () => void; stopPropagation: () => void }) => {
-    event.preventDefault()
-    event.stopPropagation()
-
-    if (timer.current) {
-      clearTimeout(timer.current)
-    }
-
-    setOpen(false)
-  }
-
-  return (
-    <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <button
-          aria-current={active ? 'location' : undefined}
-          aria-label={`#${floor} ${comment.author}`}
-          className="kanban-floor-line"
-          data-floor-id={String(comment.id)}
-          onBlur={leave}
-          onClick={event => {
-            event.preventDefault()
-            setOpen(false)
-            onLocate()
-          }}
-          onFocus={enter}
-          onKeyDown={event => {
-            if (event.key === 'Escape' && open) {
-              dismiss(event)
-            } else {
-              onKey(event)
-            }
-          }}
-          onPointerEnter={enter}
-          onPointerLeave={leave}
-          ref={trigger}
-          type="button"
-        >
-          <span />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="kanban-floor-menu"
-        collisionPadding={12}
-        data-kanban-preview
-        onCloseAutoFocus={event => event.preventDefault()}
-        onEscapeKeyDown={dismiss}
-        onOpenAutoFocus={event => event.preventDefault()}
-        onPointerEnter={enter}
-        onPointerLeave={leave}
-        side="right"
-        style={{
-          width: 'min(24rem,70vw)',
-          maxHeight: 'min(24rem,var(--radix-popover-content-available-height))',
-          overflowY: 'auto'
-        }}
-      >
-        <span className="text-[0.75rem] text-(--ui-accent)">
-          #{floor} · {comment.author}
-        </span>
-        <p className="mt-2 whitespace-pre-wrap break-words text-[0.75rem]">{comment.body}</p>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
-export function FloorDirectory({ active, comments, floors, k, nav, onLocate }: FloorDirectoryProps) {
-  const lines = useRef<HTMLDivElement>(null)
-  const [message, setMessage] = useState('')
-  useEffect(() => {
-    const viewport = lines.current
-
-    const button = Array.from(viewport?.querySelectorAll<HTMLElement>('[data-floor-id]') ?? []).find(
-      item => item.dataset.floorId === active
-    )
-
-    if (viewport && button) {
-      if (button.offsetTop < viewport.scrollTop) {
-        viewport.scrollTop = button.offsetTop
-      } else if (button.offsetTop + button.offsetHeight > viewport.scrollTop + viewport.clientHeight) {
-        viewport.scrollTop = button.offsetTop + button.offsetHeight - viewport.clientHeight
-      }
-    }
-  }, [active])
 
   if (!comments.length) {
     return null
   }
 
   return (
-    <nav aria-label={k.floorDirectory} className="kanban-floor-directory" data-kanban-directory ref={nav}>
-      <div className="kanban-floor-lines" ref={lines}>
-        {comments.map((comment, index) => {
-          const id = String(comment.id)
+    <nav
+      aria-label={k.floorDirectory}
+      className="kanban-floor-directory"
+      ref={nav}
+      style={{ visibility: visible ? undefined : 'hidden' }}
+    >
+      <Popover
+        onOpenChange={value => {
+          setOpen(value)
 
-          return (
-            <FloorPreview
-              active={active === id}
-              comment={comment}
-              floor={floors.get(id)!}
-              key={id}
-              onKey={event => {
-                const offsets: Record<string, number> = {
-                  ArrowDown: index + 1,
-                  ArrowUp: index - 1,
-                  Home: 0,
-                  End: comments.length - 1
-                }
+          if (!value) {
+            setPinned(false)
+          }
+        }}
+        open={open && visible}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            aria-label={k.floorDirectory}
+            onClick={() => {
+              setPinned(!pinned)
+              setOpen(!pinned)
+            }}
+            onPointerEnter={enter}
+            ref={trigger}
+            size="icon-xs"
+            variant="ghost"
+          >
+            <span aria-hidden="true">≡</span>
+          </Button>
+        </PopoverTrigger>
+        <div className="kanban-floor-lines" onPointerLeave={leave} style={{ maxHeight: Math.min(height, 240) }}>
+          {ordered.map(comment => {
+            const id = String(comment.id)
 
-                if (event.key in offsets) {
-                  event.preventDefault()
-                  const buttons = lines.current?.querySelectorAll<HTMLButtonElement>('[data-floor-id]')
-                  const button = buttons?.[Math.max(0, Math.min(comments.length - 1, offsets[event.key]))]
-                  button?.focus({ preventScroll: true })
+            return (
+              <button
+                aria-current={current === id ? 'location' : undefined}
+                aria-label={`#${id} ${comment.author}`}
+                className="kanban-floor-line"
+                key={id}
+                onClick={() => locate(id)}
+                onFocus={() => {
+                  setHovered(id)
+                  setOpen(true)
+                }}
+                onPointerEnter={() => {
+                  setHovered(id)
+                  enter()
+                }}
+                type="button"
+              >
+                <span />
+              </button>
+            )
+          })}
+        </div>
+        <PopoverContent
+          align="start"
+          className="kanban-floor-menu flex flex-col gap-2"
+          collisionPadding={12}
+          onCloseAutoFocus={event => event.preventDefault()}
+          onEscapeKeyDown={event => {
+            event.preventDefault()
+            event.stopPropagation()
+            setOpen(false)
+            setPinned(false)
+            trigger.current?.focus()
+          }}
+          onOpenAutoFocus={event => {
+            event.preventDefault()
 
-                  if (button && lines.current) {
-                    lines.current.scrollTop = button.offsetTop - lines.current.clientHeight / 2
-                  }
-                }
-              }}
-              onLocate={() => {
-                onLocate(id)
-                setMessage(`${k.locatedFloor} #${floors.get(id)}`)
-              }}
+            if (pinned) {
+              input.current?.focus()
+            }
+          }}
+          onPointerEnter={enter}
+          onPointerLeave={() => {
+            if (!pinned && !nav.current?.contains(document.activeElement)) {
+              leave()
+            }
+          }}
+          side="right"
+          style={{ maxHeight: height, width: 'min(19rem,70vw)' }}
+        >
+          {preview && (
+            <div className="text-[0.75rem]">
+              <span>
+                #{preview.id} · {preview.author}
+              </span>
+              <p className="line-clamp-2 text-(--ui-text-tertiary)">{preview.body}</p>
+            </div>
+          )}
+          <form
+            className="flex gap-1"
+            onSubmit={event => {
+              event.preventDefault()
+              locate(number.trim().replace(/^#/, ''))
+            }}
+          >
+            <Input
+              aria-label={k.jumpFloor}
+              onChange={event => setNumber(event.target.value)}
+              placeholder={k.jumpFloor}
+              ref={input}
+              value={number}
             />
-          )
-        })}
-      </div>
+            <Button size="xs" type="submit" variant="outline">
+              {k.open}
+            </Button>
+          </form>
+          <div className="min-h-0 overflow-y-auto">
+            {ordered.map(comment => (
+              <Button
+                className="flex w-full justify-start"
+                key={comment.id}
+                onClick={() => locate(String(comment.id))}
+                size="xs"
+                variant="ghost"
+              >
+                #{comment.id} · {comment.author}
+                {selection.author && selection.author !== comment.author ? ` · ${k.authorFilter}` : ''}
+              </Button>
+            ))}
+          </div>
+          {message && <p role="status">{message}</p>}
+        </PopoverContent>
+      </Popover>
       <span className="sr-only" role="status">
         {message}
       </span>
+      <ConfirmDialog
+        description={k.showHiddenFloor}
+        onClose={() => setHidden(null)}
+        onConfirm={() => {
+          onShowAll()
+          onLocate(hidden!)
+          setMessage(`${k.locatedFloor} #${hidden}`)
+          setHidden(null)
+          setOpen(false)
+          setPinned(false)
+        }}
+        open={hidden !== null}
+        title={k.floorDirectory}
+      />
     </nav>
   )
 }

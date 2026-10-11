@@ -45,44 +45,22 @@
   }
 }
 
-.kanban-discussion {
-  padding-left: 36px;
-}
-.kanban-detail-pane-switch {
-  display: none;
-}
-.kanban-composer {
-  max-height: 45vh;
-  background: transparent;
-}
-.kanban-comment-input {
-  background: var(--ui-bg-quaternary);
-}
-.kanban-floor-number {
-  color: var(--ui-accent);
-  font-weight: 600;
-}
-.kanban-floor[data-active] .kanban-floor-number {
-  font-weight: 800;
-  text-decoration: underline;
-}
+/* Stack the native columns only when space is scarce. */
 .kanban-floor-directory {
-  position: absolute;
-  left: 0;
-  visibility: hidden;
+  position: sticky;
+  top: 0.5rem;
+  align-self: flex-start;
   width: 1.5rem;
   flex-shrink: 0;
 }
 .kanban-floor-lines {
-  height: 100%;
   overflow-y: auto;
   scrollbar-width: none;
 }
 .kanban-floor-line {
   display: flex;
   align-items: center;
-  height: 24px;
-  min-width: 24px;
+  height: 12px;
   width: 100%;
 }
 .kanban-floor-line span {
@@ -94,12 +72,6 @@
 .kanban-floor-line[aria-current] span {
   width: 18px;
   background: var(--ui-accent);
-}
-.kanban-floor-line:hover span {
-  width: 18px;
-}
-.kanban-floor-line:focus-visible {
-  outline: 1px solid var(--ui-accent);
 }
 .kanban-floor[data-located]:focus {
   outline: 1px solid var(--ui-accent);
@@ -117,19 +89,19 @@
   }
 }
 @media (max-width: 700px) {
-  .kanban-detail-pane-switch {
-    display: block;
-  }
-  .kanban-detail-columns[data-pane='materials'] .kanban-detail-main,
-  .kanban-detail-columns[data-pane='discussion'] .kanban-detail-sidebar {
-    display: none;
-  }
   .kanban-detail-columns {
-    overflow: hidden;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .kanban-detail-columns > div {
+    flex: none;
+    overflow-y: visible;
   }
   .kanban-detail-sidebar {
     width: 100%;
-    min-height: 0;
+    overflow-y: visible;
     border-left: 0;
+    border-top: 1px solid var(--ui-stroke-tertiary);
+    padding-top: 1rem;
   }
 }

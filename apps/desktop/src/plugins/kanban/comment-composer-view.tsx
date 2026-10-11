@@ -71,7 +71,7 @@ export function CommentComposerView({
       <div className="relative">
         <Textarea
           aria-label={running ? k.messageWorker : k.addComment}
-          className="kanban-comment-input field-sizing-content max-h-[min(10rem,25vh)] resize-none pr-9 text-[0.8125rem]"
+          className="field-sizing-content max-h-[min(10rem,25vh)] resize-none pr-9 text-[0.8125rem]"
           disabled={disabled}
           onChange={event => setBody(event.target.value)}
           onKeyDown={event => {

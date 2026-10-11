@@ -27,7 +27,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   dispose()
-  vi.unstubAllGlobals()
   vi.clearAllMocks()
 })
 
@@ -68,23 +67,6 @@ it('keeps independent saves on the original material without opening its reader'
   expect(download).toHaveBeenNthCalledWith(2, '/fixtures/notes.md', 'notes.md')
   expect(reader.readText).not.toHaveBeenCalled()
   expect(reader.readDataUrl).not.toHaveBeenCalled()
-})
-
-it('copies the exact original path independently and exposes manual recovery on failure', async () => {
-  const path = '/original/very long directory/notes.md'
-  const copy = vi.fn().mockResolvedValue(undefined)
-  vi.stubGlobal('hermesDesktop', { writeClipboard: copy })
-  view(path, vi.fn())
-  const button = screen.getByRole('button', { name: `${en.copyMaterialPath} notes.md` })
-  fireEvent.click(button)
-  await waitFor(() => expect(copy).toHaveBeenCalledWith(path))
-  expect(screen.queryByRole('textbox')).toBeNull()
-  copy.mockRejectedValueOnce(new Error('denied'))
-  fireEvent.click(button)
-  const field = (await screen.findByRole('textbox', { name: en.copyMaterialPath })) as HTMLInputElement
-  expect(field.value).toBe(path)
-  expect(field.readOnly).toBe(true)
-  expect(reader.readText).not.toHaveBeenCalled()
 })
 
 it('never lets material file links escape its read-only owner across source switches or disconnect', async () => {

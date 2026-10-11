@@ -9,8 +9,6 @@ import { type PluginLocaleBundles, type PluginTranslate, usePluginI18n } from '@
 import { useMemo } from 'react'
 
 type KanbanMessages = {
-  copyMaterialPath: string
-  shownComments: (shown: number, total: number) => string
   retryMaterial: string
   invalidMaterial: string
   materialUnavailable: string
@@ -273,8 +271,6 @@ type KanbanMessages = {
 }
 
 export const en: KanbanMessages = {
-  copyMaterialPath: 'Copy full path',
-  shownComments: (shown, total) => `Showing ${shown}/${total}`,
   retryMaterial: 'Retry preview',
   invalidMaterial: 'Invalid or oversized HTML',
   materialUnavailable: 'The backend did not provide a file path. Update it to open or save attachments.',
@@ -560,8 +556,6 @@ const ja: KanbanMessages = {
   floorMissing: '該当する番号がありません。',
   showHiddenFloor: 'この投稿は非表示です。全員を表示して移動しますか？',
   locatedFloor: '移動した投稿',
-  copyMaterialPath: '完全なパスをコピー',
-  shownComments: (shown, total) => `${shown}/${total} 件を表示`,
   reassignRunning: '現在の作業を停止して再割り当てしますか？',
   rosterEmpty: '担当者がいません',
   retryRoster: '担当者を再取得',
@@ -835,8 +829,6 @@ const zh: KanbanMessages = {
   floorMissing: '楼层不存在，请检查编号。',
   showHiddenFloor: '该楼层被隐藏，显示全部作者后定位？',
   locatedFloor: '已定位楼层',
-  copyMaterialPath: '复制完整路径',
-  shownComments: (shown, total) => `显示 ${shown}/${total}`,
   reassignRunning: '停止当前工作并重新分配？',
   rosterEmpty: '暂无可分配人',
   retryRoster: '重新获取名单',
@@ -1107,8 +1099,6 @@ const zhHant: KanbanMessages = {
   floorMissing: '樓層不存在，請檢查編號。',
   showHiddenFloor: '該樓層被隱藏，顯示全部作者後定位？',
   locatedFloor: '已定位樓層',
-  copyMaterialPath: '複製完整路徑',
-  shownComments: (shown, total) => `顯示 ${shown}/${total}`,
   reassignRunning: '停止目前工作並重新分配？',
   rosterEmpty: '暫無可分配人',
   retryRoster: '重新取得名單',

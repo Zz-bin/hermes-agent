@@ -1,7 +1,6 @@
 import {
   Button,
   Codicon,
-  CopyButton,
   type DesktopFileReader,
   Dialog,
   DialogContent,
@@ -63,36 +62,24 @@ export function Attachment({ attachment, onDownload, reader }: AttachmentProps) 
   const [open, setOpen] = useState(false)
   const entry = useRef<HTMLButtonElement>(null)
   const [retry, setRetry] = useState(0)
-  const [copyFailed, setCopyFailed] = useState(false)
-  const path = attachment.stored_path || undefined
-  const filename = attachment.filename.split(/[\\/]/).pop() || attachment.filename
+  const path = attachment.stored_path?.trim()
   const target = path ? localPreviewTarget(path) : null
   const download = useMutation({ mutationFn: () => onDownload(path!, attachment.filename) })
 
   return (
-    <div className="kanban-material flex w-full min-w-0 flex-wrap items-center gap-1">
+    <div className="flex min-w-0 flex-wrap items-center gap-1">
       <Button
         aria-label={`${k.open} ${attachment.filename}`}
-        className="min-w-0 flex-1 justify-start font-normal"
+        className="min-w-0 justify-start font-normal"
         disabled={!path}
         onClick={() => setOpen(true)}
         ref={entry}
         size="inline"
+        title={!path ? k.materialUnavailable : attachment.filename}
         variant="text"
       >
-        <span className="truncate">{filename}</span>
+        <span className="truncate">{attachment.filename}</span>
       </Button>
-      <CopyButton
-        appearance="button"
-        buttonSize="icon-xs"
-        className="shrink-0"
-        disabled={!path}
-        label={`${k.copyMaterialPath} ${filename}${!path ? ` · ${k.materialUnavailable}` : ''}`}
-        onCopied={() => setCopyFailed(false)}
-        onCopyError={() => setCopyFailed(true)}
-        showLabel={false}
-        text={path ?? ''}
-      />
       <Button
         aria-label={`${t.fileMenu.download} ${attachment.filename}`}
         disabled={!path || download.isPending}
@@ -103,18 +90,6 @@ export function Attachment({ attachment, onDownload, reader }: AttachmentProps) 
         <Codicon name={download.isPending ? 'sync' : 'cloud-download'} spinning={download.isPending} />
       </Button>
       {!path && <span className="basis-full text-[0.7rem] text-(--ui-text-tertiary)">{k.materialUnavailable}</span>}
-      {copyFailed && path && (
-        <div className="basis-full min-w-0 text-xs" role="alert">
-          <span>{t.common.copyFailed}</span>
-          <input
-            aria-label={k.copyMaterialPath}
-            className="w-full"
-            onFocus={event => event.target.select()}
-            readOnly
-            value={path}
-          />
-        </div>
-      )}
 
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent

@@ -59,10 +59,6 @@ export function visibleComments(
     })
 }
 
-export function commentFloors(comments: KanbanComment[]): Map<string, number> {
-  return new Map(visibleComments(comments, '', 'oldest').map((comment, index) => [String(comment.id), index + 1]))
-}
-
 export function resolveCommentContext(
   comments: KanbanComment[],
   selected: null | string,

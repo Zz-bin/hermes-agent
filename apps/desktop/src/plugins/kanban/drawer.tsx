@@ -54,7 +54,7 @@ import {
 import { AssigneeMenu as CurrentAssigneeMenu } from './assignee-menu'
 import { Attachment } from './attachment'
 import { CommentComposer as FixedCommentComposer } from './comment-composer'
-import { commentFloors, handoffContext, resolveCommentContext } from './comment-context'
+import { handoffContext, resolveCommentContext } from './comment-context'
 import { CommentMarkdown } from './comment-markdown'
 import { type CommentSelection, CommentThread } from './comment-thread'
 import { ModelOverrideField, overridePatch } from './model-override'
@@ -372,14 +372,7 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
             <TaskMarkdown text={body} />
           </div>
           {long && (
-            <Button
-              aria-expanded={expanded}
-              className="text-(--ui-accent) hover:text-(--ui-accent)"
-              onClick={() => setExpanded(!expanded)}
-              size="xs"
-              variant="textStrong"
-            >
-              <Codicon name={expanded ? 'chevron-up' : 'chevron-down'} />
+            <Button aria-expanded={expanded} onClick={() => setExpanded(!expanded)} size="xs" variant="ghost">
               {expanded ? k.collapseText : k.expandText}
             </Button>
           )}
@@ -732,11 +725,9 @@ export function TaskDrawer({
   const [commentState, setCommentState] = useState({ key: selectionKey, value: emptySelection })
   const selection = commentState.key === selectionKey ? commentState.value : emptySelection
   const onSelection = (next: CommentSelection) => setCommentState({ key: selectionKey, value: next })
-  const [pane, setPane] = useState<'discussion' | 'materials'>('discussion')
 
   useEffect(() => {
     setCommentState({ key: selectionKey, value: { author: '', order: 'newest', selected: null } })
-    setPane('discussion')
   }, [selectionKey])
 
   // Socket-invalidated (bindApi); the interval is only the socketless heartbeat.
@@ -748,7 +739,6 @@ export function TaskDrawer({
   })
 
   const task = detail?.task
-  const floors = commentFloors(detail?.comments ?? [])
   const contextComment = resolveCommentContext(detail?.comments ?? [], selection.selected, selection.author)
   const snapshot = contextComment ? handoffContext(contextComment) : null
 
@@ -933,237 +923,222 @@ export function TaskDrawer({
               <Loader type="lemniscate-bloom" />
             </div>
           ) : (
-            <>
-              <div className="kanban-detail-pane-switch px-5 pb-3">
-                <SegmentedControl
-                  onChange={setPane}
-                  options={[
-                    { id: 'discussion', label: k.discussion },
-                    { id: 'materials', label: k.commentMaterials }
-                  ]}
-                  value={pane}
-                />
-              </div>
-              <div className="kanban-detail-columns flex min-h-0 flex-1" data-pane={pane}>
-                <div className="kanban-detail-main flex min-h-0 min-w-0 flex-1 flex-col">
-                  <div
-                    className="kanban-detail-reading min-h-0 min-w-0 flex-1 overflow-y-auto px-5 pb-5"
-                    data-kanban-scroller
-                  >
-                    <div className="flex flex-col gap-5">
-                      {task.status === 'ready' && !task.assignee && !defaultAssignee && (
-                        <Callout title={k.readyUnassignedTitle} tone={SEVERITY_TONE.warning}>
-                          <p className="text-[0.6875rem] leading-relaxed text-(--ui-text-secondary)">
-                            {k.readyUnassignedBody}
-                          </p>
-                        </Callout>
-                      )}
+            <div className="kanban-detail-columns flex min-h-0 flex-1" data-kanban-scroller>
+              <div className="min-w-0 flex-1 overflow-y-auto px-5 pb-5" data-kanban-scroller>
+                <div className="flex flex-col gap-5">
+                  {task.status === 'ready' && !task.assignee && !defaultAssignee && (
+                    <Callout title={k.readyUnassignedTitle} tone={SEVERITY_TONE.warning}>
+                      <p className="text-[0.6875rem] leading-relaxed text-(--ui-text-secondary)">
+                        {k.readyUnassignedBody}
+                      </p>
+                    </Callout>
+                  )}
 
-                      {task.diagnostics && task.diagnostics.length > 0 && (
-                        <Section label={k.diagnosticsN(task.diagnostics.length)}>
-                          <Diagnostics
-                            items={task.diagnostics}
-                            onReclaim={() => void mutate(() => reclaimTask(task.id))()}
-                            onUnblock={() =>
-                              void mutate(
-                                () => patchTask(task.id, { status: 'ready' }),
-                                () => host.notify({ kind: 'success', message: k.unblockedMessage(shortId(task.id)) })
-                              )()
-                            }
-                          />
-                        </Section>
-                      )}
-
-                      <DescriptionSection
-                        body={task.body}
-                        key={`description:${selectionKey}`}
-                        onSave={body => void mutate(() => patchTask(task.id, { body }))()}
+                  {task.diagnostics && task.diagnostics.length > 0 && (
+                    <Section label={k.diagnosticsN(task.diagnostics.length)}>
+                      <Diagnostics
+                        items={task.diagnostics}
+                        onReclaim={() => void mutate(() => reclaimTask(task.id))()}
+                        onUnblock={() =>
+                          void mutate(
+                            () => patchTask(task.id, { status: 'ready' }),
+                            () => host.notify({ kind: 'success', message: k.unblockedMessage(shortId(task.id)) })
+                          )()
+                        }
                       />
+                    </Section>
+                  )}
 
-                      {task.result && (
-                        <Section label={k.result}>
-                          <TaskMarkdown text={task.result} />
-                        </Section>
-                      )}
+                  <DescriptionSection
+                    body={task.body}
+                    key={`description:${selectionKey}`}
+                    onSave={body => void mutate(() => patchTask(task.id, { body }))()}
+                  />
 
-                      {task.latest_summary && !isAdminSummary(task.latest_summary) && (
-                        <Section label={k.latestSummary}>
-                          <p className="text-[0.625rem] text-(--ui-text-quaternary)">{k.runSummarySource}</p>
-                          <TaskMarkdown text={task.latest_summary} />
-                        </Section>
-                      )}
+                  {task.result && (
+                    <Section label={k.result}>
+                      <TaskMarkdown text={task.result} />
+                    </Section>
+                  )}
 
-                      <FeedTabs
-                        detail={detail}
-                        key={`comments:${selectionKey}`}
-                        log={log ?? null}
+                  {task.latest_summary && !isAdminSummary(task.latest_summary) && (
+                    <Section label={k.latestSummary}>
+                      <p className="text-[0.625rem] text-(--ui-text-quaternary)">{k.runSummarySource}</p>
+                      <TaskMarkdown text={task.latest_summary} />
+                    </Section>
+                  )}
 
-                        onSelection={onSelection}
-                        running={running}
-                        selection={selection}
-                      />
-                    </div>
-                  </div>
-                  <div className="kanban-composer shrink-0 overflow-y-auto px-5 py-3">
-                    <FixedCommentComposer
-                      actions={detail.actions}
-                      draftKey={`${selectionKey}:${detail.reader.key}`}
-                      imagesSupported={Array.isArray(detail.attachments)}
-                      key={`composer:${selectionKey}:${detail.reader.key}`}
-                      onSaved={invalidate}
-                      running={running}
-                    />
-                  </div>
+                  <FeedTabs
+                    detail={detail}
+                    key={`comments:${selectionKey}`}
+                    log={log ?? null}
+
+                    onSelection={onSelection}
+                    running={running}
+                    selection={selection}
+                  />
                 </div>
-                <aside className="kanban-detail-sidebar flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-l border-(--ui-stroke-tertiary) px-4 pb-5">
-                  <Section label={selection.selected !== null ? k.selectedContext : k.latestHandoff}>
-                    {contextComment ? (
-                      <div
-                        className="flex min-w-0 flex-col gap-2 break-words"
-                        data-comment-context={String(contextComment.id)}
-                      >
-                        <p className="text-[0.6875rem] text-(--ui-text-tertiary)">
-                          {contextComment.author} · #{floors.get(String(contextComment.id))} ·{' '}
-                          {ago(contextComment.created_at)}
-                        </p>
-                        <MetaRow label={k.assignee}>{snapshot?.assignee ?? k.notRecorded}</MetaRow>
-                        <MetaRow label={k.phase}>{snapshot?.phase ?? k.notRecorded}</MetaRow>
-                        <MetaRow label={k.statusAtHandoff}>
-                          {snapshot ? columnLabel(k, snapshot.status) : k.notRecorded}
-                        </MetaRow>
-                        <MetaRow label={k.workspace}>{snapshot?.workspace_path ?? k.notRecorded}</MetaRow>
-                        {snapshot?.approval_scope && (
-                          <details>
-                            <summary className="cursor-pointer text-[0.6875rem]">{k.declaredScope}</summary>
-                            <TaskMarkdown text={snapshot.approval_scope} />
-                          </details>
-                        )}
-                        {snapshot?.verification && (
-                          <details>
-                            <summary className="cursor-pointer text-[0.6875rem]">{k.reportedVerification}</summary>
-                            <TaskMarkdown text={snapshot.verification} />
-                          </details>
-                        )}
-                        <MetaRow label={k.commentMaterials}>
-                          {contextAttachments.length ? (
-                            <ul>
-                              {contextAttachments.map(attachment => (
-                                <li key={attachment.id}>
-                                  <Attachment
-                                    attachment={attachment}
-                                    key={detail.reader.key}
-                                    onDownload={detail.downloadAttachment}
-                                    reader={detail.reader}
-                                  />
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <span>
-                              {snapshot && !snapshot.attachment_ids.length && !snapshot.material_paths?.length
-                                ? k.noAttachments
-                                : snapshot?.material_paths?.length
-                                  ? null
-                                  : k.notRecorded}
-                            </span>
-                          )}
-                          {snapshot?.material_paths?.map(path => (
-                            <div className="flex min-w-0 items-start gap-1" key={path}>
-                              <Attachment
-                                attachment={{ id: path, filename: path, stored_path: path }}
-                                onDownload={detail.downloadAttachment}
-                                reader={detail.reader}
-                              />
-                            </div>
-                          ))}
-                        </MetaRow>
-                      </div>
-                    ) : (
-                      <p className="text-[0.75rem] text-(--ui-text-quaternary)">{k.noHandoff}</p>
-                    )}
-                  </Section>
-                  <details>
-                    <summary className="cursor-pointer text-[0.75rem] font-medium text-(--ui-text-secondary)">
-                      {k.currentProperties}
-                    </summary>
-                    <div className="mt-3 flex flex-col gap-4">
-                      {typeof task.priority === 'number' && (
-                        <MetaRow label={k.metaPriority}>
-                          <PriorityGlyph priority={task.priority} />
-                        </MetaRow>
+              </div>
+              <aside className="kanban-detail-sidebar flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-l border-(--ui-stroke-tertiary) px-4 pb-5">
+                <Section label={selection.selected !== null ? k.selectedContext : k.latestHandoff}>
+                  {contextComment ? (
+                    <div
+                      className="flex min-w-0 flex-col gap-2 break-words"
+                      data-comment-context={String(contextComment.id)}
+                    >
+                      <p className="text-[0.6875rem] text-(--ui-text-tertiary)">
+                        {contextComment.author} · #{contextComment.id} · {ago(contextComment.created_at)}
+                      </p>
+                      <MetaRow label={k.assignee}>{snapshot?.assignee ?? k.notRecorded}</MetaRow>
+                      <MetaRow label={k.phase}>{snapshot?.phase ?? k.notRecorded}</MetaRow>
+                      <MetaRow label={k.statusAtHandoff}>
+                        {snapshot ? columnLabel(k, snapshot.status) : k.notRecorded}
+                      </MetaRow>
+                      <MetaRow label={k.workspace}>{snapshot?.workspace_path ?? k.notRecorded}</MetaRow>
+                      {snapshot?.approval_scope && (
+                        <details>
+                          <summary className="cursor-pointer text-[0.6875rem]">{k.declaredScope}</summary>
+                          <TaskMarkdown text={snapshot.approval_scope} />
+                        </details>
                       )}
-                      {task.tenant && <MetaRow label={k.metaTenant}>{task.tenant}</MetaRow>}
-                      {/* #124391 — block detail the API already returns. The kind is
+                      {snapshot?.verification && (
+                        <details>
+                          <summary className="cursor-pointer text-[0.6875rem]">{k.reportedVerification}</summary>
+                          <TaskMarkdown text={snapshot.verification} />
+                        </details>
+                      )}
+                      <MetaRow label={k.commentMaterials}>
+                        {contextAttachments.length ? (
+                          <ul>
+                            {contextAttachments.map(attachment => (
+                              <li key={attachment.id}>
+                                <Attachment
+                                  attachment={attachment}
+                                  key={detail.reader.key}
+                                  onDownload={detail.downloadAttachment}
+                                  reader={detail.reader}
+                                />
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span>
+                            {snapshot && !snapshot.attachment_ids.length && !snapshot.material_paths?.length
+                              ? k.noAttachments
+                              : snapshot?.material_paths?.length
+                                ? null
+                                : k.notRecorded}
+                          </span>
+                        )}
+                        {snapshot?.material_paths?.map(path => (
+                          <div className="flex min-w-0 items-start gap-1" key={path}>
+                            <Attachment
+                              attachment={{ id: path, filename: path, stored_path: path }}
+                              onDownload={detail.downloadAttachment}
+                              reader={detail.reader}
+                            />
+                            <CopyButton text={path} />
+                          </div>
+                        ))}
+                      </MetaRow>
+                    </div>
+                  ) : (
+                    <p className="text-[0.75rem] text-(--ui-text-quaternary)">{k.noHandoff}</p>
+                  )}
+                </Section>
+                <details>
+                  <summary className="cursor-pointer text-[0.75rem] font-medium text-(--ui-text-secondary)">
+                    {k.currentProperties}
+                  </summary>
+                  <div className="mt-3 flex flex-col gap-4">
+                    {typeof task.priority === 'number' && (
+                      <MetaRow label={k.metaPriority}>
+                        <PriorityGlyph priority={task.priority} />
+                      </MetaRow>
+                    )}
+                    {task.tenant && <MetaRow label={k.metaTenant}>{task.tenant}</MetaRow>}
+                    {/* #124391 — block detail the API already returns. The kind is
                     retained across unblock, so present it as CURRENT only
                     while the card sits in the blocked column. */}
-                      {task.status === 'blocked' && task.block_kind && (
-                        <MetaRow label={k.blockReason}>
-                          <Tip label={k.blockKindTip(task.block_kind)}>
-                            <span className="cursor-help text-destructive">{task.block_kind}</span>
-                          </Tip>
-                        </MetaRow>
-                      )}
-                      {typeof task.block_recurrences === 'number' && task.block_recurrences > 0 && (
-                        <MetaRow label={k.blockRecurrences}>
-                          <Tip label={k.blockRecurrencesTip}>
-                            <span className="cursor-help">×{task.block_recurrences}</span>
-                          </Tip>
-                        </MetaRow>
-                      )}
-                      {typeof task.consecutive_failures === 'number' && task.consecutive_failures > 0 && (
-                        <MetaRow label={k.consecutiveFailures}>{task.consecutive_failures}</MetaRow>
-                      )}
-                      {task.last_failure_error && (
-                        <MetaRow label={k.lastFailureError}>
-                          <span className="whitespace-pre-wrap font-mono text-[0.65rem] leading-snug text-(--ui-text-tertiary)">
-                            {task.last_failure_error}
-                          </span>
-                        </MetaRow>
-                      )}
-                      {task.workspace_path && (
-                        <MetaRow label={k.workspace}>
-                          <WorkspaceValue kind={task.workspace_kind} path={task.workspace_path} />
-                        </MetaRow>
-                      )}
-                      <MetaRow label={k.model}>
-                        <ModelOverrideField
-                          onChange={next => void mutate(() => patchTask(task.id, overridePatch(next)))()}
-                          value={{
-                            effort: task.reasoning_effort ?? '',
-                            model: task.model_override ?? '',
-                            provider: task.provider_override ?? ''
-                          }}
-                        />
+                    {task.status === 'blocked' && task.block_kind && (
+                      <MetaRow label={k.blockReason}>
+                        <Tip label={k.blockKindTip(task.block_kind)}>
+                          <span className="cursor-help text-destructive">{task.block_kind}</span>
+                        </Tip>
                       </MetaRow>
-                      {(detail.links.parents.length > 0 || detail.links.children.length > 0) &&
-                        (['parents', 'children'] as const).map(side =>
-                          detail.links[side].length > 0 ? (
-                            <MetaRow key={side} label={side === 'parents' ? k.blockedBy : k.blocks}>
-                              <LinkChips ids={detail.links[side]} linkTitles={linkTitles} onOpen={onOpen} />
-                            </MetaRow>
-                          ) : null
-                        )}
-                      {task.created_by && <MetaRow label={k.metaCreatedBy}>{task.created_by}</MetaRow>}
-                      {ago(task.created_at) && <MetaRow label={k.metaCreated}>{ago(task.created_at)}</MetaRow>}
-                      {running && task.worker_pid ? <MetaRow label={k.metaWorkerPid}>{task.worker_pid}</MetaRow> : null}
-                      <EstimateSection id={task.id} />
-                    </div>
-                  </details>
+                    )}
+                    {typeof task.block_recurrences === 'number' && task.block_recurrences > 0 && (
+                      <MetaRow label={k.blockRecurrences}>
+                        <Tip label={k.blockRecurrencesTip}>
+                          <span className="cursor-help">×{task.block_recurrences}</span>
+                        </Tip>
+                      </MetaRow>
+                    )}
+                    {typeof task.consecutive_failures === 'number' && task.consecutive_failures > 0 && (
+                      <MetaRow label={k.consecutiveFailures}>{task.consecutive_failures}</MetaRow>
+                    )}
+                    {task.last_failure_error && (
+                      <MetaRow label={k.lastFailureError}>
+                        <span className="whitespace-pre-wrap font-mono text-[0.65rem] leading-snug text-(--ui-text-tertiary)">
+                          {task.last_failure_error}
+                        </span>
+                      </MetaRow>
+                    )}
+                    {task.workspace_path && (
+                      <MetaRow label={k.workspace}>
+                        <WorkspaceValue kind={task.workspace_kind} path={task.workspace_path} />
+                      </MetaRow>
+                    )}
+                    <MetaRow label={k.model}>
+                      <ModelOverrideField
+                        onChange={next => void mutate(() => patchTask(task.id, overridePatch(next)))()}
+                        value={{
+                          effort: task.reasoning_effort ?? '',
+                          model: task.model_override ?? '',
+                          provider: task.provider_override ?? ''
+                        }}
+                      />
+                    </MetaRow>
+                    {(detail.links.parents.length > 0 || detail.links.children.length > 0) &&
+                      (['parents', 'children'] as const).map(side =>
+                        detail.links[side].length > 0 ? (
+                          <MetaRow key={side} label={side === 'parents' ? k.blockedBy : k.blocks}>
+                            <LinkChips ids={detail.links[side]} linkTitles={linkTitles} onOpen={onOpen} />
+                          </MetaRow>
+                        ) : null
+                      )}
+                    {task.created_by && <MetaRow label={k.metaCreatedBy}>{task.created_by}</MetaRow>}
+                    {ago(task.created_at) && <MetaRow label={k.metaCreated}>{ago(task.created_at)}</MetaRow>}
+                    {running && task.worker_pid ? <MetaRow label={k.metaWorkerPid}>{task.worker_pid}</MetaRow> : null}
+                    <EstimateSection id={task.id} />
+                  </div>
+                </details>
 
-                  {Array.isArray(detail.attachments) && (
-                    <AttachmentsSection
-                      attachments={detail.attachments}
-                      onDownload={detail.downloadAttachment}
-                      onUpload={file => uploadMut.mutate(file)}
-                      pending={uploadMut.isPending}
-                      reader={detail.reader}
-                    />
-                  )}
-                </aside>
-              </div>
-            </>
+                {Array.isArray(detail.attachments) && (
+                  <AttachmentsSection
+                    attachments={detail.attachments}
+                    onDownload={detail.downloadAttachment}
+                    onUpload={file => uploadMut.mutate(file)}
+                    pending={uploadMut.isPending}
+                    reader={detail.reader}
+                  />
+                )}
+              </aside>
+            </div>
           )}
         </div>
+        {detail && task && !errorMessage && (
+          <div className="kanban-composer shrink-0 border-t border-(--ui-stroke-tertiary) px-5 py-3">
+            <FixedCommentComposer
+              actions={detail.actions}
+              draftKey={`${selectionKey}:${detail.reader.key}`}
+              imagesSupported={Array.isArray(detail.attachments)}
+              key={`composer:${selectionKey}:${detail.reader.key}`}
+              onSaved={invalidate}
+              running={running}
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

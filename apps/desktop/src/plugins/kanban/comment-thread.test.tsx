@@ -41,7 +41,7 @@ it('keeps independent disclosures and selection while making clipped links inert
   expect(change).not.toHaveBeenCalled()
 })
 
-it('only navigates visible card-local floors without changing history selection', async () => {
+it('requires confirmation to reveal a filtered original floor and never selects it as context', async () => {
   const changes = vi.fn()
 
   function View() {
@@ -66,18 +66,26 @@ it('only navigates visible card-local floors without changing history selection'
   }
 
   const { container } = render(<View />)
-  const directory = screen.getByRole('button', { name: '#2 reviewer' })
-  expect(screen.queryByRole('button', { name: '#1 builder' })).toBeNull()
-  expect(screen.getByText(en.shownComments(1, 2))).toBeTruthy()
+  const directory = screen.getByRole('button', { name: en.floorDirectory })
   fireEvent.click(directory)
+  fireEvent.change(screen.getByRole('textbox', { name: en.jumpFloor }), { target: { value: '999' } })
+  fireEvent.submit(screen.getByRole('textbox', { name: en.jumpFloor }).closest('form')!)
+  expect(screen.getAllByText(en.floorMissing).length).toBeGreaterThan(0)
+  fireEvent.change(screen.getByRole('textbox', { name: en.jumpFloor }), { target: { value: '11' } })
+  fireEvent.submit(screen.getByRole('textbox', { name: en.jumpFloor }).closest('form')!)
+  fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }))
   expect(changes).not.toHaveBeenCalled()
   expect(container.querySelector('[data-comment-id="11"]')).toBeNull()
-  await waitFor(() => expect(directory.getAttribute('aria-current')).toBe('location'))
-  expect(container.querySelector('[data-comment-id="35"] button[aria-expanded]')?.getAttribute('aria-expanded')).toBe(
+  fireEvent.click(directory)
+  fireEvent.submit(screen.getByRole('textbox', { name: en.jumpFloor }).closest('form')!)
+  fireEvent.click(await screen.findByRole('button', { name: 'Confirm' }))
+  await waitFor(() => expect(container.querySelector('[data-comment-id="11"]')).not.toBeNull())
+  expect(changes).toHaveBeenLastCalledWith({ author: '', order: 'oldest', selected: '35' })
+  expect(container.querySelector('[data-comment-id="11"] button[aria-expanded]')?.getAttribute('aria-expanded')).toBe(
     'true'
   )
-  expect(container.querySelector('[data-comment-id="35"] button[aria-pressed]')?.getAttribute('aria-pressed')).toBe(
-    'true'
+  expect(container.querySelector('[data-comment-id="11"] button[aria-pressed]')?.getAttribute('aria-pressed')).toBe(
+    'false'
   )
   const otherDisclosure = container.querySelector<HTMLButtonElement>('[data-comment-id="35"] button[aria-expanded]')!
   otherDisclosure.focus()
