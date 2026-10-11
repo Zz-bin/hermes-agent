@@ -4,10 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { I18nProvider } from '@/i18n'
 
+import type { fetchTask } from '../plugins/kanban/api'
 import { TaskDrawer } from '../plugins/kanban/drawer'
 import { en } from '../plugins/kanban/i18n'
 import type * as KanbanI18n from '../plugins/kanban/i18n'
-import type { fetchTask } from '../plugins/kanban/api'
 
 const mocks = vi.hoisted(() => ({
   fetchTask: vi.fn(),
