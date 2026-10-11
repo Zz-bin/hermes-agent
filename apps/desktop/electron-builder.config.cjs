@@ -105,7 +105,7 @@ module.exports = {
     // shipped stable default, but isolate nonstable userData from first access.
     // A stable-branded channel has no token and keeps stable's userData.
     ...((channelRequest && token) || appNamePascal !== artifactNamePascal ? { productName: displayName } : {}),
-    desktopName: appId
+    desktopName: `${appId}.desktop`
   },
   directories: {
     output: 'release'

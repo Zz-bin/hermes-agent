@@ -210,6 +210,7 @@ test('packaging isolates boot metadata and executable names without renaming rel
   const stableIdentity: ProductIdentity = await identityForVariant('bundled')
   const stable: PackagingConfiguration = load()
   assert.equal(stable.extraMetadata.productName || pkg.productName, pkg.productName)
+  assert.equal(stable.extraMetadata.desktopName, `${stableIdentity.appId}.desktop`)
 
   process.env.HERMES_PAYLOAD_TAG = 'v0.28.0'
   process.env.HERMES_BUILD_COMMIT = ''
@@ -224,6 +225,7 @@ test('packaging isolates boot metadata and executable names without renaming rel
     // changes neither its early userData lookup nor its single-instance lock.
     assert.equal(config.extraMetadata.productName, identity.displayName)
     assert.equal(config.extraMetadata.name, identity.appNamePascal)
+    assert.equal(config.extraMetadata.desktopName, `${identity.appId}.desktop`)
     assert.notEqual(config.extraMetadata.name, stableIdentity.appNamePascal)
     assert.equal(config.win.executableName, identity.windowsExecutableName)
 
@@ -297,5 +299,25 @@ test('store carries the Partner Center MSIX identity and no other variant does',
 
   for (const v of [undefined, 'bundled', 'light'] as const) {
     assert.equal((await identityForVariant(v)).storeMsix, undefined, `variant ${v} must carry no storeMsix`)
+  }
+})
+
+test('Linux window class and desktop filename match the packaged launcher for every variant', async (): Promise<void> => {
+  const runtime = await import('./product-identity')
+
+  for (const variant of ['bundled', 'store']) {
+    const identity = await identityForVariant(variant)
+    const calls: string[][] = []
+
+    const app = {
+      commandLine: { appendSwitch: (name: string, value: string): void => { calls.push([name, value]) } }
+    }
+
+    runtime.applyLinuxDesktopIdentity(app, 'linux', identity)
+    assert.deepEqual(calls, [['class', identity.appId]])
+    calls.length = 0
+    runtime.applyLinuxDesktopIdentity(app, 'darwin', identity)
+    runtime.applyLinuxDesktopIdentity(app, 'win32', identity)
+    assert.deepEqual(calls, [])
   }
 })

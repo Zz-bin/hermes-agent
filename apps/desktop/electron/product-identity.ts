@@ -46,3 +46,22 @@ export function applyDesktopIdentity(
 
   return identity.displayName
 }
+
+interface LinuxDesktopAppIdentity {
+  commandLine: { appendSwitch(name: string, value: string): void }
+}
+
+/** Electron 40 does not derive X11 WM_CLASS from desktopName. Pin the class
+ * before any window is created so launcher clicks group correctly.
+ */
+export function applyLinuxDesktopIdentity(
+  app: LinuxDesktopAppIdentity,
+  platform: NodeJS.Platform = process.platform,
+  identity: Readonly<ProductIdentity> = PRODUCT_IDENTITY
+): void {
+  if (platform !== 'linux') {
+    return
+  }
+
+  app.commandLine.appendSwitch('class', identity.appId)
+}
