@@ -686,7 +686,7 @@ def test_known_wrapper_candidates_cover_installer_layouts(
 
 
 def test_installed_entry_carries_the_window_app_id(tmp_path, xdg_home, monkeypatch):
-    """The window's app_id is what GNOME matches the entry against — not the old "Hermes"."""
+    """Wayland uses the file app id; Electron 40 X11 uses the product name."""
     _stub_install(tmp_path, monkeypatch)
     root = _make_project(tmp_path)
 
@@ -695,7 +695,7 @@ def test_installed_entry_carries_the_window_app_id(tmp_path, xdg_home, monkeypat
     assert entry is not None
     assert entry.name == f"{lde.APP_ID}.desktop"
     values = _parse(entry.read_text(encoding="utf-8"))
-    assert values["StartupWMClass"] == lde.APP_ID
+    assert values["StartupWMClass"] == values["Name"]
     assert values["Name"] == "Hermes"  # the menu label is not part of the identity
 
 
@@ -724,7 +724,7 @@ def test_install_keeps_the_legacy_entry_as_a_hidden_alias(tmp_path, xdg_home, mo
     assert legacy.is_file(), "an existing pin resolves through this file — it must survive"
     alias = _parse(legacy.read_text(encoding="utf-8"))
     assert alias["NoDisplay"] == "true"  # no second Hermes in the app grid
-    assert alias["StartupWMClass"] == lde.APP_ID  # still groups with the window
+    assert alias["StartupWMClass"] == alias["Name"]  # still groups with the window
     entry_values = _parse(entry.read_text(encoding="utf-8"))
     assert alias["Exec"] == entry_values["Exec"]  # launches the same command
     assert alias["Icon"] == entry_values["Icon"]

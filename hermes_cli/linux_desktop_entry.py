@@ -22,11 +22,8 @@ import time
 from pathlib import Path
 from typing import Callable, Mapping, Optional
 
-# Identity the packaged app claims for its window: electron-builder bakes product-identity.cjs's
-# `appId` into extraMetadata.desktopName, and Electron hands that string to the compositor
-# verbatim (Wayland app_id, CHROME_DESKTOP). GNOME links a window to a launcher by StartupWMClass
-# or by a `<app_id>.desktop` file name, so the entry has to carry the same id — under the old
-# "hermes.desktop" name a packaged launch matches neither rung and lands on the placeholder icon.
+# Wayland matches the desktop file's app id. Electron 40 uses the product name
+# for X11 WM_CLASS independently, so StartupWMClass must match "Hermes".
 APP_ID = "com.nousresearch.hermes"
 DESKTOP_ENTRY_NAME = f"{APP_ID}.desktop"
 
@@ -590,7 +587,7 @@ def render_desktop_entry(exec_command: str, icon: str) -> str:
         "Terminal=false\n"
         "Categories=Utility;\n"
         "StartupNotify=true\n"
-        f"StartupWMClass={APP_ID}\n"
+        "StartupWMClass=Hermes\n"
     )
 
 

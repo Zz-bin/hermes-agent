@@ -5,7 +5,6 @@ import path from 'node:path'
 import { app } from 'electron'
 
 import { resolveDesktopHermesHome } from './data-paths'
-import { applyLinuxDesktopIdentity } from './product-identity'
 import { readDesktopLaunchConfig } from './renderer-heap-flags'
 import { wslgLaunchArgs } from './wslg-launch'
 import { spawnWslgLaunch } from './wslg-launch-process'
@@ -30,8 +29,6 @@ function configuredElectronFlags(env: NodeJS.ProcessEnv): string[] {
     return []
   }
 }
-
-applyLinuxDesktopIdentity(app)
 
 const linux = process.platform === 'linux'
 const electronFlags = linux ? configuredElectronFlags(process.env) : []

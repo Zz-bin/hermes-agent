@@ -241,6 +241,7 @@ class TestCmdGuiOnABundle:
 
         from hermes_cli import main_desktop, source_build
         import pm
+        monkeypatch.setenv("HERMES_RUNTIME_DIR", str(repo / "runtime"))
         monkeypatch.setattr(cli_main, "PROJECT_ROOT", repo)
         monkeypatch.setattr(source_build, "source_build_env", lambda env, **kwargs: dict(env))
         monkeypatch.setattr(pm, "ensure", lambda name, *, base_env: SimpleNamespace(env=base_env))

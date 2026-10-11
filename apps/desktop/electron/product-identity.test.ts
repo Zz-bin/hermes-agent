@@ -301,23 +301,3 @@ test('store carries the Partner Center MSIX identity and no other variant does',
     assert.equal((await identityForVariant(v)).storeMsix, undefined, `variant ${v} must carry no storeMsix`)
   }
 })
-
-test('Linux window class and desktop filename match the packaged launcher for every variant', async (): Promise<void> => {
-  const runtime = await import('./product-identity')
-
-  for (const variant of ['bundled', 'store']) {
-    const identity = await identityForVariant(variant)
-    const calls: string[][] = []
-
-    const app = {
-      commandLine: { appendSwitch: (name: string, value: string): void => { calls.push([name, value]) } }
-    }
-
-    runtime.applyLinuxDesktopIdentity(app, 'linux', identity)
-    assert.deepEqual(calls, [['class', identity.appId]])
-    calls.length = 0
-    runtime.applyLinuxDesktopIdentity(app, 'darwin', identity)
-    runtime.applyLinuxDesktopIdentity(app, 'win32', identity)
-    assert.deepEqual(calls, [])
-  }
-})
