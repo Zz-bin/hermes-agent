@@ -47,6 +47,9 @@ it('scores occupied reading area with continuity and clamps the rail to the visi
   const low = directoryPosition({ top: 300, bottom: 1000 }, { top: 0, bottom: 400 })
   expect(300 + low.top + low.height).toBeLessThan(400)
   expect(low.top).toBeGreaterThanOrEqual(0)
+  const ended = directoryPosition({ top: -100, bottom: 50 }, { top: 0, bottom: 400 })
+  expect(ended.height).toBe(0)
+  expect(-100 + ended.top).toBeLessThanOrEqual(50)
 })
 
 it('releases located floors only for unconsumed keyboard intent followed by main-column displacement', () => {

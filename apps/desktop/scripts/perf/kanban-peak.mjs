@@ -176,7 +176,7 @@ try {
     await measure(
       'jump-floor',
       async () => {
-        await dialog.getByRole('button', { name: new RegExp(`^#${targetId} `) }).click()
+        await dialog.locator(`[data-floor-id="${targetId}"]`).click()
         await firstComment.waitFor({ state: 'visible' })
         if ((await firstComment.getAttribute('data-highlighted')) !== 'true')
           throw new Error('Floor jump did not highlight its target')

@@ -37,7 +37,7 @@ export function readingFloor(floors: FloorBounds[], top: number, bottom: number,
 export function directoryPosition(region: { top: number; bottom: number }, bounds: { top: number; bottom: number }) {
   const middle = (bounds.top + bounds.bottom) / 2
   const bottom = Math.min(bounds.bottom, region.bottom)
-  const top = Math.max(region.top, middle)
+  const top = Math.min(region.bottom, Math.max(region.top, middle))
   const height = Math.max(0, Math.min(240, bottom - top - 8))
 
   return { height, top: top - region.top }
