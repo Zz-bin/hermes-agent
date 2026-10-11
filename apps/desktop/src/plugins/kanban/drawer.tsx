@@ -59,6 +59,7 @@ import { CommentMarkdown } from './comment-markdown'
 import { type CommentSelection, CommentThread } from './comment-thread'
 import { ModelOverrideField, overridePatch } from './model-override'
 import { TextDisclosure } from './text-disclosure'
+import { textPreview } from './text-preview'
 import {
   type Diagnostic,
   type DiagnosticAction,
@@ -66,8 +67,7 @@ import {
   type KanbanEvent,
   type KanbanTaskDetail,
   SEVERITY_TONE,
-  type TaskEstimate,
-  type WorkerLog
+  type TaskEstimate
 } from './types'
 import {
   ago,
@@ -327,7 +327,7 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
       return
     }
 
-    const measure = () => setLong(element.scrollHeight > 72)
+    const measure = () => setLong(textPreview(body ?? '') !== body || element.scrollHeight > 72)
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(element)
@@ -374,7 +374,7 @@ function DescriptionSection({ body, onSave }: { body: null | string | undefined;
       ) : body ? (
         <div className="flex flex-col items-start gap-2">
           <div className={`w-full ${expanded ? '' : 'max-h-[4.5rem] overflow-hidden'}`} ref={preview}>
-            <TaskMarkdown text={body} />
+            <TaskMarkdown text={expanded ? body : textPreview(body)} />
           </div>
           {long && <TextDisclosure expanded={expanded} k={k} onClick={() => setExpanded(!expanded)} />}
         </div>
@@ -564,19 +564,27 @@ function LinkChips({
  *  control hides itself when only comments exist — nothing to switch to. */
 function FeedTabs({
   detail,
-  log,
   onSelection,
   selection,
   running
 }: {
   detail: Awaited<ReturnType<typeof fetchTask>>
-  log: null | WorkerLog
   onSelection: (next: CommentSelection) => void
   selection: CommentSelection
   running: boolean
 }) {
   const k = useKanban()
   const [selectedTab, setTab] = useState<'activity' | 'comments' | 'log' | 'runs'>('comments')
+  const scope = useKanbanScope()
+  const slug = useValue($boardSlug)
+
+  // Log updates should not invalidate description, sidebar and composer rendering.
+  const { data: log } = useQuery({
+    enabled: routedToScope,
+    queryFn: () => fetchLog(detail.task.id),
+    queryKey: logKey(scope, slug, detail.task.id),
+    refetchInterval: running ? 3_000 : 15_000
+  })
 
   const hasLog = !!log?.exists && !!log.content
   const switchable = detail.events.length > 0 || detail.runs.length > 0 || hasLog
@@ -757,13 +765,6 @@ export function TaskDrawer({
 
   const running = task?.status === 'running'
   const defaultAssignee = useDefaultAssignee()
-
-  const { data: log } = useQuery({
-    enabled: query => !!id && routedToScope(query),
-    queryFn: () => fetchLog(id!),
-    queryKey: logKey(scope, slug, id ?? ''),
-    refetchInterval: running ? 3_000 : 15_000
-  })
 
   const invalidate = () => {
     void qc.invalidateQueries({ queryKey: taskKey(scope, slug, id!) })
@@ -980,8 +981,6 @@ export function TaskDrawer({
                   <FeedTabs
                     detail={detail}
                     key={`comments:${selectionKey}`}
-                    log={log ?? null}
-
                     onSelection={onSelection}
                     running={running}
                     selection={selection}

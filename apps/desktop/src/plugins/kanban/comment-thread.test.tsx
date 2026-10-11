@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, expect, it, vi } from 'vitest'
 
@@ -11,7 +11,10 @@ const comments: KanbanComment[] = [
   { id: 35, author: 'reviewer', body: 'Another long discussion\n'.repeat(40), created_at: 1 }
 ]
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 it('keeps independent disclosures and selection while making clipped links inert', () => {
   const change = vi.fn()
@@ -116,4 +119,59 @@ it('highlights the comment body on click and transfers the same highlight on foc
   expect(first.hasAttribute('data-highlighted')).toBe(false)
   expect(second.hasAttribute('data-highlighted')).toBe(true)
   expect(change).not.toHaveBeenCalled()
+})
+
+it('bounds folded Markdown work and defers unseen discussions while preserving the full source on expansion', () => {
+  let notify!: IntersectionObserverCallback
+  const disconnect = vi.fn()
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      constructor(callback: IntersectionObserverCallback) {
+        notify = callback
+      }
+      observe() {}
+      unobserve() {}
+      disconnect = disconnect
+    }
+  )
+  const body = 'A readable paragraph.\n\n'.repeat(200) + 'COMPLETE SOURCE END'
+  const renderBody = vi.fn((text: string) => <p>{text}</p>)
+
+  const { container, unmount } = render(
+    <CommentThread
+      comments={Array.from({ length: 4 }, (_, index) => ({
+        id: index + 1,
+        author: 'builder',
+        body,
+        created_at: index
+      }))}
+      k={en}
+      onChange={vi.fn()}
+      renderBody={renderBody}
+      selection={{ author: '', order: 'oldest', selected: null }}
+    />
+  )
+
+  const first = container.querySelector<HTMLElement>('[data-comment-id="1"]')!
+  const unseen = container.querySelector<HTMLElement>('[data-comment-id="4"]')!
+  expect(first.querySelector('p')?.textContent.length).toBeLessThan(body.length)
+  expect(body.startsWith(first.querySelector('p')!.textContent!)).toBe(true)
+  expect(unseen.querySelector('p')).toBeNull()
+  expect(renderBody).not.toHaveBeenCalledWith(body)
+
+  act(() =>
+    notify(
+      [{ target: unseen, isIntersecting: true }] as unknown as IntersectionObserverEntry[],
+      {} as IntersectionObserver
+    )
+  )
+  expect(unseen.querySelector('p')).not.toBeNull()
+  expect(unseen.textContent).not.toContain('COMPLETE SOURCE END')
+  fireEvent.click(unseen.querySelector('button[aria-expanded]')!)
+  expect(unseen.querySelector('p')?.textContent).toBe(body)
+  fireEvent.click(unseen.querySelector('button[aria-expanded]')!)
+  expect(unseen.textContent).not.toContain('COMPLETE SOURCE END')
+  unmount()
+  expect(disconnect).toHaveBeenCalledOnce()
 })

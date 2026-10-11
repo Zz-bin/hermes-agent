@@ -42,34 +42,74 @@ export function FloorDirectory({ comments, k, list, selection, onShowAll, onLoca
 
   useEffect(() => {
     const element = list.current
-    const scroller = element ? discussionScroller(element) : null
+    const initialScroller = element ? discussionScroller(element) : null
 
-    if (!element || !scroller) {
+    if (!element || !initialScroller) {
       return
     }
 
+    let scroller = initialScroller
+    const floors = Array.from(element.querySelectorAll<HTMLElement>('[data-comment-id]'))
+    let frame: number | null = null
+    let refreshScroller = false
+
     const update = () => {
-      const bounds = (discussionScroller(element) ?? scroller).getBoundingClientRect()
+      frame = null
+
+      if (refreshScroller) {
+        refreshScroller = false
+        const nextScroller = discussionScroller(element) ?? scroller
+
+        if (nextScroller !== scroller) {
+          observer.unobserve(scroller)
+          scroller = nextScroller
+          observer.observe(scroller)
+        }
+      }
+
+      const bounds = scroller.getBoundingClientRect()
       const region = element.getBoundingClientRect()
       const top = nav.current?.getBoundingClientRect().top ?? bounds.top
       setVisible(region.bottom > bounds.top && region.top < bounds.bottom)
       setHeight(Math.max(48, bounds.bottom - Math.max(bounds.top, top) - 8))
-      const floors = Array.from(element.querySelectorAll<HTMLElement>('[data-comment-id]'))
       const floor = floors.find(item => item.getBoundingClientRect().bottom > bounds.top + 8)
       setCurrent(floor?.dataset.commentId ?? null)
     }
 
+    const schedule = () => {
+      frame ??= requestAnimationFrame(update)
+    }
+
+    const onScroll = (event: Event) => {
+      const target = event.target
+
+      if (target === scroller || (target instanceof HTMLElement && target.contains(element))) {
+        schedule()
+      }
+    }
+
+    const onResize = () => {
+      // Responsive layouts can move scrolling from the column to its parent.
+      refreshScroller = true
+      schedule()
+    }
+
+    const observer = new ResizeObserver(onResize)
+
     update()
-    window.addEventListener('scroll', update, { passive: true, capture: true })
-    window.addEventListener('resize', update)
-    const observer = new ResizeObserver(update)
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    window.addEventListener('resize', onResize)
     observer.observe(scroller)
     observer.observe(element)
 
     return () => {
-      window.removeEventListener('scroll', update, true)
-      window.removeEventListener('resize', update)
+      window.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onResize)
       observer.disconnect()
+
+      if (frame !== null) {
+        cancelAnimationFrame(frame)
+      }
     }
   }, [comments, list, selection.author, selection.order])
 

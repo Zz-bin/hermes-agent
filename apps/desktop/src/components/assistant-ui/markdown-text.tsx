@@ -68,18 +68,18 @@ const mathPlugin = createMemoizedMathPlugin({ singleDollarTextMath: true })
 
 // `@streamdown/code` statically imports ALL of shiki (every grammar + theme —
 // the single largest chunk in the renderer), so it must never sit on the
-// entry graph. Load it on first markdown mount and swap it into the plugin
+// entry graph. Load it when code first appears and swap it into the plugin
 // table when it lands; until then fenced code renders through the
 // `SyntaxHighlighter` override's plain path (same output Shiki's own
 // `delay` fallback shows), so nothing flashes or reflows unexpectedly.
 type CodePlugin = typeof streamdownCode
 let codePluginCache: CodePlugin | null = null
 
-function useCodePlugin(): CodePlugin | null {
+function useCodePlugin(enabled: boolean): CodePlugin | null {
   const [plugin, setPlugin] = useState(codePluginCache)
 
   useEffect(() => {
-    if (plugin) {
+    if (!enabled || plugin) {
       return
     }
 
@@ -96,7 +96,7 @@ function useCodePlugin(): CodePlugin | null {
     return () => {
       cancelled = true
     }
-  }, [plugin])
+  }, [enabled, plugin])
 
   return plugin
 }
@@ -646,7 +646,7 @@ function MarkdownTextSurface({
   // render as code cards. The expensive Shiki pass is deferred by
   // `SyntaxHighlighter` below when `isStreaming` is true, and the code plugin
   // itself arrives async (useCodePlugin) so shiki never blocks cold start.
-  const code = useCodePlugin()
+  const code = useCodePlugin(isStreaming || /`{3}|~{3}|(?:^|\n)(?: {4}|\t)/.test(text))
   const plugins = useMemo(() => (code ? { math: mathPlugin, code } : { math: mathPlugin }), [code])
 
   const components = useMemo(
