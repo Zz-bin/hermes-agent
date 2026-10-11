@@ -1,0 +1,27 @@
+{
+  "fixture": "Actual native components with real isolated Kanban/files HTTP routers and canonical session-token middleware; Electron IPC save cancellation is simulated; not installed product",
+  "checks": [
+    "rich body expands to greater visible height",
+    "selected context remains selectable while collapsed",
+    "collapsed links inert",
+    "directory locates original ID and expands target",
+    "directory does not select located comment",
+    "located target receives focus",
+    "single visible composer with readable scroller 1200x900",
+    "single visible composer with readable scroller 390x800",
+    "single visible composer with readable scroller 640x400",
+    "filename reads real authenticated markdown without saving",
+    "same-source task refresh does not restart an open material reader",
+    "closing material restores focus to its original entry",
+    "HTML sandbox has no permissions",
+    "HTML sanitization removes active and outgoing links",
+    "HTML made no external request",
+    "authenticated PDF bytes reach the native blob iframe",
+    "uploaded image reference decodes in its newly saved ordinary comment",
+    "successful comment clears draft and pending image",
+    "all material reads carry original explicit owner",
+    "no renderer script errors"
+  ],
+  "errors": [],
+  "external": []
+}

@@ -1,0 +1,177 @@
+{
+  "scope": "Two isolated real HTTP routers, databases and HOME roots on Ubuntu; canonical auth; simulated Electron IPC routing, not a second physical machine",
+  "checks": [
+    "both captured readers use real authenticated file routers across local/remote/local and A/B/A",
+    "original local owner sends all its reads only to server A with builder identity",
+    "original remote owner sends all its reads only to server B with reviewer identity",
+    "missing original file fails rather than reading the new owner",
+    "comment committed only to the original database after switching the active source",
+    "both assignment rosters remain bound to their original task owners",
+    "save cancellation remains bound to original owner (Electron save dialog is simulated)"
+  ],
+  "result": {
+    "values": [
+      "# Isolated material\n\nOriginal authenticated backend content.",
+      "# Isolated material\n\nOriginal authenticated backend content.",
+      "# Isolated material\n\nOriginal authenticated backend content.",
+      "# Isolated material\n\nOriginal authenticated backend content.",
+      "# Isolated material\n\nOriginal authenticated backend content.",
+      "# Isolated material\n\nOriginal authenticated backend content."
+    ],
+    "failure": "Error: 404: {\"detail\":\"File not found\"}",
+    "savedOriginal": true,
+    "absentOther": true,
+    "rosterA": [
+      "default",
+      "builder",
+      "reviewer"
+    ],
+    "rosterB": [
+      "default",
+      "builder",
+      "reviewer"
+    ],
+    "saves": [
+      {
+        "connectionId": "local",
+        "path": "/home/capz/.hermes/profiles/builder/cache/scratch/kanban-interactions-532e415b-z3/board/kanban/attachments/t_db72d4b9/notes.md",
+        "profile": "builder",
+        "suggestedName": "notes.md"
+      }
+    ],
+    "requestsA": [
+      {
+        "path": "/api/plugins/kanban/tasks/t_db72d4b9",
+        "profile": null,
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_db72d4b9",
+        "profile": null,
+        "method": "GET"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_db72d4b9",
+        "profile": "builder",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_db72d4b9",
+        "profile": "builder",
+        "method": "GET"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "builder",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "builder",
+        "method": "GET"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "builder",
+        "method": "GET"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "builder",
+        "method": "GET"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_db72d4b9/comments",
+        "profile": "builder",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_db72d4b9/comments",
+        "profile": "builder",
+        "method": "POST"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_db72d4b9",
+        "profile": "builder",
+        "method": "GET"
+      },
+      {
+        "path": "/api/plugins/kanban/profiles",
+        "profile": "builder",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/plugins/kanban/profiles",
+        "profile": "builder",
+        "method": "GET"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "builder",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "builder",
+        "method": "GET"
+      }
+    ],
+    "requestsB": [
+      {
+        "path": "/api/plugins/kanban/tasks/t_c83a0fd8",
+        "profile": null,
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_c83a0fd8",
+        "profile": null,
+        "method": "GET"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_c83a0fd8",
+        "profile": "reviewer",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_c83a0fd8",
+        "profile": "reviewer",
+        "method": "GET"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "reviewer",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "reviewer",
+        "method": "GET"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "reviewer",
+        "method": "GET"
+      },
+      {
+        "path": "/api/fs/read-text",
+        "profile": "reviewer",
+        "method": "GET"
+      },
+      {
+        "path": "/api/plugins/kanban/tasks/t_c83a0fd8",
+        "profile": "reviewer",
+        "method": "GET"
+      },
+      {
+        "path": "/api/plugins/kanban/profiles",
+        "profile": "reviewer",
+        "method": "OPTIONS"
+      },
+      {
+        "path": "/api/plugins/kanban/profiles",
+        "profile": "reviewer",
+        "method": "GET"
+      }
+    ]
+  }
+}

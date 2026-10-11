@@ -1676,6 +1676,8 @@ export {
   type ComposerModelPillContext,
   type ComposerModelPillProvider
 } from '@/app/chat/composer/contrib'
+export { extractClipboardImageBlobs } from '@/app/chat/composer/text-utils'
+export { LocalFilePreview } from '@/app/chat/right-rail/preview-file'
 /** THE session status dot — the one primitive the sidebar row, the pane tabs
  *  and the session switcher render, so a session's status can never disagree
  *  between surfaces. Pass the STORED session id and it resolves the rest
@@ -1732,6 +1734,7 @@ export {
   PanelRowMenu,
   PanelSectionLabel
 } from '@/app/overlays/panel'
+
 export {
   type ProfileGroupHeaderContribution,
   type ProfileGroupRoute,
@@ -1748,7 +1751,6 @@ export {
  *  look) — use it for colour picking instead of driving app widgets through
  *  React internals; pair it with `host.sessions.setColor` for session colours. */
 export { APPEARANCE_AREAS } from '@/app/settings/appearance-contrib'
-
 /** THE settings rows: `ListRow` is label + description with the control beside
  *  it (wide) or under it (narrow); `ToggleRow` is the one on/off row — a Switch,
  *  never an Off/On pill pair. Use them for preference rows in plugin panes and
@@ -1862,6 +1864,9 @@ export { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 export { Textarea } from '@/components/ui/textarea'
 export { Tip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 export type { GatewayEventListener } from '@/contrib/events'
+
+// -- contracts ----------------------------------------------------------------
+
 export type {
   HermesPlugin,
   PluginContext,
@@ -1878,9 +1883,6 @@ export type {
  *  `ctx.register` stays the door for permanent contributions. Namespace the
  *  id with your plugin slug (`kanban:board-switcher`). */
 export { Contribute, type ContributeProps } from '@/contrib/react/contribute'
-
-// -- contracts ----------------------------------------------------------------
-
 export type { Contribution } from '@/contrib/types'
 /** The live gateway instance type — for typing the `gateway` prop `ConnectorsTab`
  *  takes; obtain the instance from `host.getGateway()`. */
@@ -1920,6 +1922,7 @@ export { type BudgetedLoop, type BudgetedLoopOptions, createBudgetedLoop } from 
 /** The blank transcript as a contribution area: claim the sessions you own and
  *  render what stands in the gap. Core's own splash keeps a fresh draft. */
 export { CHAT_EMPTY_AREA, type ChatEmptyContribution, type ChatEmptyProps } from '@/lib/chat-empty'
+export { captureGatewayFileReader, type DesktopFileReader } from '@/lib/desktop-fs'
 /** THE confirm flow for guarded model switches — when a gateway model-switch
  *  RPC answers `confirm_required` (data-policy / expensive-model guard),
  *  route it through this shared applier instead of forking a per-surface
@@ -1941,6 +1944,7 @@ export * as icons from '@/lib/icons'
 export { isSubmitEnter } from '@/lib/ime'
 export { type KeybindContribution, KEYBINDS_AREA } from '@/lib/keybinds/actions'
 export { formatModifierToken } from '@/lib/keybinds/combo'
+export { localPreviewTarget, remoteHtmlPreviewDocument } from '@/lib/local-preview'
 /** A `Map` with a ceiling, for the module-level caches a plugin keeps across
  *  a renderer that stays open for days. Only for values that can be
  *  regenerated — eviction costs a recompute or a refetch, never correctness. */

@@ -9,6 +9,28 @@ import { type PluginLocaleBundles, type PluginTranslate, usePluginI18n } from '@
 import { useMemo } from 'react'
 
 type KanbanMessages = {
+  retryMaterial: string
+  invalidMaterial: string
+  materialUnavailable: string
+  imageUnavailable: string
+  checkOriginalTask: string
+  retrySend: string
+  floorDirectory: string
+  jumpFloor: string
+  floorMissing: string
+  showHiddenFloor: string
+  locatedFloor: string
+  reassignRunning: string
+  rosterEmpty: string
+  retryRoster: string
+  removeImage: string
+  imageLimit: string
+  checkBeforeRetry: string
+  requeueFailed: string
+  retryRequeue: string
+  commentSaved: string
+  imageSaved: string
+  noComments: string
   nav: string
   openBoard: string
   /** Command label — shows in the ⌘K palette AND as the keybind panel row,
@@ -249,6 +271,28 @@ type KanbanMessages = {
 }
 
 export const en: KanbanMessages = {
+  retryMaterial: 'Retry preview',
+  invalidMaterial: 'Invalid or oversized HTML',
+  materialUnavailable: 'The backend did not provide a file path. Update it to open or save attachments.',
+  imageUnavailable: 'Image unavailable. Open its task attachment or retry.',
+  checkOriginalTask: 'Check original task',
+  retrySend: 'Allow manual retry',
+  floorDirectory: 'Discussion floors',
+  jumpFloor: 'Jump to #',
+  floorMissing: 'Floor not found. Check its number.',
+  showHiddenFloor: 'This floor is hidden. Show all authors and locate it?',
+  locatedFloor: 'Located floor',
+  reassignRunning: 'Stop current work and reassign?',
+  rosterEmpty: 'No available assignees',
+  retryRoster: 'Retry assignees',
+  removeImage: 'Remove image',
+  imageLimit: 'Only images up to 25 MB are supported.',
+  checkBeforeRetry: 'The result is uncertain. Check the original task before retrying.',
+  requeueFailed: 'Comment saved; requeue is incomplete. Retry requeue only.',
+  retryRequeue: 'Retry requeue',
+  commentSaved: 'Comment saved',
+  imageSaved: 'Image saved as a task attachment',
+  noComments: 'No discussion yet',
   nav: 'Kanban',
   openBoard: 'Kanban: Open board',
   newTaskCommand: 'Kanban: New task',
@@ -501,6 +545,28 @@ export const en: KanbanMessages = {
 }
 
 const ja: KanbanMessages = {
+  retryMaterial: 'プレビューを再試行',
+  invalidMaterial: 'HTMLが無効か大きすぎます',
+  materialUnavailable: '接続先からファイルパスが返されませんでした。添付を開くには接続先を更新してください。',
+  imageUnavailable: '画像を表示できません。タスクの添付を開くか、再試行してください。',
+  checkOriginalTask: '元のタスクを確認',
+  retrySend: '手動再試行を許可',
+  floorDirectory: 'ディスカッション一覧',
+  jumpFloor: '移動 #',
+  floorMissing: '該当する番号がありません。',
+  showHiddenFloor: 'この投稿は非表示です。全員を表示して移動しますか？',
+  locatedFloor: '移動した投稿',
+  reassignRunning: '現在の作業を停止して再割り当てしますか？',
+  rosterEmpty: '担当者がいません',
+  retryRoster: '担当者を再取得',
+  removeImage: '画像を削除',
+  imageLimit: '25 MB以下の画像のみ対応しています。',
+  checkBeforeRetry: '結果が不明です。元のタスクを確認してから再試行してください。',
+  requeueFailed: 'コメント保存済み。再キューのみ再試行してください。',
+  retryRequeue: '再キューを再試行',
+  commentSaved: 'コメント保存済み',
+  imageSaved: '画像はタスク添付として保存済み',
+  noComments: 'まだ投稿がありません',
   nav: 'カンバン',
   openBoard: 'カンバン: ボードを開く',
   newTaskCommand: 'カンバン: 新しいタスク',
@@ -752,6 +818,28 @@ const ja: KanbanMessages = {
 }
 
 const zh: KanbanMessages = {
+  retryMaterial: '重试预览',
+  invalidMaterial: 'HTML无效或超过阅读上限',
+  materialUnavailable: '后台没有提供文件路径；更新后台后才能打开或保存附件。',
+  imageUnavailable: '图片暂时无法显示，可打开任务附件或重试。',
+  checkOriginalTask: '核对原任务',
+  retrySend: '允许手动重试',
+  floorDirectory: '讨论楼层目录',
+  jumpFloor: '跳至 #',
+  floorMissing: '楼层不存在，请检查编号。',
+  showHiddenFloor: '该楼层被隐藏，显示全部作者后定位？',
+  locatedFloor: '已定位楼层',
+  reassignRunning: '停止当前工作并重新分配？',
+  rosterEmpty: '暂无可分配人',
+  retryRoster: '重新获取名单',
+  removeImage: '移除图片',
+  imageLimit: '仅支持不超过25 MB的图片。',
+  checkBeforeRetry: '结果尚不确定，请核对原任务后再重试。',
+  requeueFailed: '评论已保存，重新排队尚未完成；只重试排队。',
+  retryRequeue: '重试重新排队',
+  commentSaved: '评论已保存',
+  imageSaved: '图片已保存为任务附件',
+  noComments: '暂无讨论',
   nav: '看板',
   openBoard: '看板：打开面板',
   newTaskCommand: '看板：新建任务',
@@ -1000,6 +1088,28 @@ const zh: KanbanMessages = {
 }
 
 const zhHant: KanbanMessages = {
+  retryMaterial: '重試預覽',
+  invalidMaterial: 'HTML無效或超過閱讀上限',
+  materialUnavailable: '後台沒有提供檔案路徑；更新後台後才能開啟或儲存附件。',
+  imageUnavailable: '圖片暫時無法顯示，可開啟任務附件或重試。',
+  checkOriginalTask: '核對原任務',
+  retrySend: '允許手動重試',
+  floorDirectory: '討論樓層目錄',
+  jumpFloor: '跳至 #',
+  floorMissing: '樓層不存在，請檢查編號。',
+  showHiddenFloor: '該樓層被隱藏，顯示全部作者後定位？',
+  locatedFloor: '已定位樓層',
+  reassignRunning: '停止目前工作並重新分配？',
+  rosterEmpty: '暫無可分配人',
+  retryRoster: '重新取得名單',
+  removeImage: '移除圖片',
+  imageLimit: '僅支援不超過25 MB的圖片。',
+  checkBeforeRetry: '結果尚不確定，請核對原任務後再重試。',
+  requeueFailed: '評論已儲存，重新排隊尚未完成；只重試排隊。',
+  retryRequeue: '重試重新排隊',
+  commentSaved: '評論已儲存',
+  imageSaved: '圖片已儲存為任務附件',
+  noComments: '暫無討論',
   nav: '看板',
   openBoard: '看板：開啟面板',
   newTaskCommand: '看板：新增任務',

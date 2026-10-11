@@ -1,0 +1,17 @@
+{
+  "scope": "Actual native drawer and isolated authenticated HTTP APIs; delayed delivery is a Playwright transport fault, not production network behavior",
+  "checks": [
+    "closing and reopening retains the original source-scoped draft",
+    "unknown.bin has a safe honest result and no edit or force-preview action",
+    "oversized.txt has a safe honest result and no edit or force-preview action",
+    "missing.txt has a safe honest result and no edit or force-preview action",
+    "denied.txt has a safe honest result and no edit or force-preview action",
+    "failure and unavailable previews never start saving",
+    "late authenticated response cannot replace a different material preview",
+    "current assignee is not a second assignment action",
+    "real reassignment reads back the new assignee",
+    "ordinary assignment is not written as a formal historical handoff",
+    "no renderer script errors on recovery paths"
+  ],
+  "errors": []
+}

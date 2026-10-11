@@ -115,6 +115,7 @@ export interface KanbanAttachment {
   id: number | string
   filename: string
   stored_path?: null | string
+  content_type?: null | string
   size?: null | number
 }
 

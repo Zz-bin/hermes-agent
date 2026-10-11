@@ -1,0 +1,37 @@
+{
+  "task_id": "t_532e415b",
+  "phase": "planning revision; not approved implementation",
+  "base_commit": "6f515c4fc80e279f3078a90656eac21f53d5c57b",
+  "target_commit": null,
+  "checks": 36,
+  "passed": 36,
+  "strict_validation": "passed",
+  "source_changes": "none",
+  "materials": {
+    "visual/interaction-v2.html": "6145e144621e26d296e1feeacb20678fb8526a98e5885f65ada2445edeb9265d",
+    "approval.md": "5670c203346909ed5bad9af912795223068de282723f31c38ef153cfb2a51dff",
+    "proposal.md": "9dea5f6441bd3cef88d755eb2783f2570caa2e523833bea46b894774c6e8d00f",
+    "design.md": "8f923dc6b9b04d396327c5d2d4f6ea2b5f5314497e2d4dee96e2ac8b705d90e2",
+    "evidence/investigation.md": "e9ca30dda309fc72570347b8974ad33c30d342f7a3b23c31303b786725cc273d",
+    "visual/v2-results.json": "f270bd480df0d78add25ec2cd4aa94c3df1b42c0f5681cf59f3a501321cd6588",
+    "visual/v2-wide-entry.png": "0a869e7eed39ef6f716995765ece1e1a1562f06e136f780e4a685f4f25074ec7",
+    "visual/v2-toc-wide.png": "1b4442a9bb194dd67a6f60201451ca4aeee891cd139894ffd4cac2771d45f3f4",
+    "visual/v2-paste-narrow.png": "0b45d42cfff1970e2350fccae3e058e625f3e80612d06007e73469633340f117",
+    "specs/kanban-detail-inspection/spec.md": "4bf0cbb09ffe55e3c2ab4125fb9a37988cd16f6a795aae5b7b319fc58cb686ae",
+    "specs/kanban-task-assignment/spec.md": "cbf1b923b95d1ea5f228451bfb0f94fd821f537e5799ffa99f6ca119e77ff8e3",
+    "specs/kanban-attachment-access/spec.md": "56e7497b5cc6fbd489382dcd58c57550b04669b8774d5cccecb91e85eef898ac"
+  },
+  "limitations": [
+    "Synthetic design only, OS clipboard and real upload/comment linkage unverified",
+    "Assignee reassignment versus next-stage reservation unresolved",
+    "Client/backend exact installed versions unconfirmed",
+    "No implementation, merge, deployment, restart, archive permission"
+  ],
+  "attachment": {
+    "id": 12,
+    "filename": "kanban-interaction-demo-v2.zip",
+    "scope": "HTML design only",
+    "sha256": "9838944bcac47b29767fc6528be5d22da6b253cc37e3fd8643255580cf9491b5",
+    "readback": "CRC and extracted HTML bytes match"
+  }
+}

@@ -1,0 +1,35 @@
+/home/capz/worktrees/hermes-kanban-detail/apps/desktop/src/plugins/kanban/comment-thread.test.tsx
+  93:10  warning  Unexpected use of 'document'  no-restricted-globals
+
+✖ 1 problem (0 errors, 1 warning)
+
+src/plugins/kanban/api.ts 87ms (unchanged)
+src/plugins/kanban/assignee-menu.tsx 12ms (unchanged)
+src/plugins/kanban/assignee-menu.test.tsx 10ms (unchanged)
+src/plugins/kanban/attachment.tsx 9ms
+src/plugins/kanban/attachment.test.tsx 5ms
+src/plugins/kanban/comment-composer.tsx 13ms (unchanged)
+src/plugins/kanban/comment-composer-view.tsx 7ms (unchanged)
+src/plugins/kanban/comment-composer.test.tsx 17ms (unchanged)
+src/plugins/kanban/comment-markdown.tsx 4ms (unchanged)
+src/plugins/kanban/comment-thread.tsx 8ms (unchanged)
+src/plugins/kanban/comment-thread.test.tsx 5ms (unchanged)
+src/plugins/kanban/discussion-scroll.ts 1ms (unchanged)
+src/plugins/kanban/floor-directory.tsx 10ms (unchanged)
+src/plugins/kanban/drawer.tsx 49ms (unchanged)
+src/plugins/kanban/i18n.ts 55ms (unchanged)
+src/plugins/kanban/image-recovery.ts 4ms
+src/plugins/kanban/types.ts 8ms (unchanged)
+src/api/plugins.ts 7ms (unchanged)
+src/lib/desktop-fs.ts 9ms (unchanged)
+src/lib/desktop-fs.test.ts 21ms (unchanged)
+src/sdk/index.ts 68ms (unchanged)
+src/app/chat/right-rail/preview-file.tsx 32ms (unchanged)
+
+ RUN  v4.1.10 /home/capz/worktrees/hermes-kanban-detail/apps/desktop
+
+
+ Test Files  7 passed (7)
+      Tests  68 passed (68)
+   Start at  14:20:03
+   Duration  8.98s (transform 28.22s, setup 673ms, import 38.32s, tests 2.34s, environment 2.02s)

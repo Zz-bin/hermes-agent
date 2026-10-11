@@ -1,0 +1,47 @@
+{
+  "task": "t_532e415b",
+  "change": "fix-kanban-discussion-interactions",
+  "base_commit": "6f515c4fc80e279f3078a90656eac21f53d5c57b",
+  "target_commit": null,
+  "checks_passed": 48,
+  "runtime_errors": [],
+  "product_e2e": false,
+  "spec_validate": "passed strict",
+  "hashes": {
+    "visual/interaction-v3.html": {
+      "bytes": 27803,
+      "sha256": "f7b934046787d846d3025f25aba48dbdc0d24f3d189d32ff94ee1b0d50117ecf"
+    },
+    "visual/verify-v3.mjs": {
+      "bytes": 14691,
+      "sha256": "eff558d3de670fb69221f9b1e381d18980ddee3f599b9be46c3d1c3b84f0c8bf"
+    },
+    "visual/v3-results.json": {
+      "bytes": 6383,
+      "sha256": "94f37f12af0883483be5a67aa0c3b871736baf7a82880c16d65ee7e9239efa9e"
+    },
+    "visual/interaction-demo-v3.zip": {
+      "bytes": 9211,
+      "sha256": "936032ba4a3a4eff3f76acef7c933adce02067e5c30c0bec78df2c704a374315"
+    },
+    "proposal.md": {
+      "bytes": 4259,
+      "sha256": "349871c49feb1979969c18e1ce32a2e79ee9bd7e158307db758f6be68629717a"
+    },
+    "design.md": {
+      "bytes": 13324,
+      "sha256": "af4eb06b389ba847583c19b431f2c2c3e9484c8074a282a325de15aaf3f2eece"
+    },
+    "approval.md": {
+      "bytes": 5340,
+      "sha256": "e9660194d77d197ec936f0376efd4612a26ed85d7bcfcd7d2a89b84f9ca8ba46"
+    },
+    "specs/kanban-detail-inspection/spec.md": {
+      "bytes": 6159,
+      "sha256": "14420857dcec74f58f498699fadd2ec4d8f96ac742ffce9aad3a372d05ceef06"
+    }
+  },
+  "attachment_id": 13,
+  "attachment_readback": "CRC + HTML + ZIP exact bytes passed",
+  "archive_method": "ZIP LZMA; requires LZMA-capable unzip utility"
+}

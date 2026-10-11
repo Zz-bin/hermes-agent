@@ -1,0 +1,132 @@
+{
+  "fixture": "standalone synthetic design; not product E2E",
+  "checks": [
+    {
+      "name": "真实高度变化",
+      "ok": true,
+      "details": {
+        "before": 72,
+        "after": 459
+      }
+    },
+    {
+      "name": "选中仍可收起",
+      "ok": true
+    },
+    {
+      "name": "其他楼层独立",
+      "ok": true
+    },
+    {
+      "name": "跳转展开且聚焦但不改选择",
+      "ok": true
+    },
+    {
+      "name": "隐藏目标确认",
+      "ok": true
+    },
+    {
+      "name": "取消保留筛选",
+      "ok": true
+    },
+    {
+      "name": "显示全部再定位",
+      "ok": true
+    },
+    {
+      "name": "排序不重编号",
+      "ok": true
+    },
+    {
+      "name": "无目标可恢复",
+      "ok": true
+    },
+    {
+      "name": "宽屏增高末层不遮挡",
+      "ok": true,
+      "details": {
+        "last": {
+          "x": 125,
+          "y": 55.046875,
+          "width": 694,
+          "height": 546.546875
+        },
+        "composer": {
+          "x": 105,
+          "y": 633.40625,
+          "width": 734,
+          "height": 193.59375
+        }
+      }
+    },
+    {
+      "name": "文件名称打开而非保存",
+      "ok": true
+    },
+    {
+      "name": "预览失败重试",
+      "ok": true
+    },
+    {
+      "name": "独立保存",
+      "ok": true
+    },
+    {
+      "name": "HTML预览无脚本沙箱",
+      "ok": true
+    },
+    {
+      "name": "分配取消不改处理人",
+      "ok": true
+    },
+    {
+      "name": "明确确认分配",
+      "ok": true
+    },
+    {
+      "name": "窄屏全部末尾内容不遮挡",
+      "ok": true,
+      "details": {
+        "aside": {
+          "x": 20.203125,
+          "y": 3.90625,
+          "width": 599.59375,
+          "height": 659.484375
+        },
+        "narrow": {
+          "x": 20.203125,
+          "y": 663.40625,
+          "width": 599.59375,
+          "height": 95.59375
+        }
+      }
+    },
+    {
+      "name": "窄屏增高仍不遮挡",
+      "ok": true,
+      "details": {
+        "aside": {
+          "x": 20.203125,
+          "y": -94.09375,
+          "width": 599.59375,
+          "height": 659.484375
+        },
+        "composer": {
+          "x": 20.203125,
+          "y": 565.40625,
+          "width": 599.59375,
+          "height": 193.59375
+        }
+      }
+    },
+    {
+      "name": "窄屏无横溢出",
+      "ok": true
+    },
+    {
+      "name": "无运行错误",
+      "ok": true
+    }
+  ],
+  "errors": []
+}

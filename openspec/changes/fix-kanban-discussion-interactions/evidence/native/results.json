@@ -1,0 +1,26 @@
+{
+  "fixture": "synthetic; current native TaskDrawer; no DB or product edits",
+  "before": {
+    "client": 520,
+    "scroll": 520,
+    "display": "flow-root",
+    "clamp": "3"
+  },
+  "after": {
+    "client": 520,
+    "scroll": 520,
+    "display": "block",
+    "clamp": "none"
+  },
+  "selectedDisclosure": 0,
+  "composer": {
+    "x": 125,
+    "y": 4912.875,
+    "width": 694,
+    "height": 64
+  },
+  "saveCalled": true,
+  "assigneePresent": 0,
+  "narrowOverflow": false,
+  "errors": []
+}

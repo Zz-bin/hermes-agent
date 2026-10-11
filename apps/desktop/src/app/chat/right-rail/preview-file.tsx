@@ -25,6 +25,7 @@ import { translateNow, useI18n } from '@/i18n'
 import {
   desktopFileDiff,
   DesktopFileMissingError,
+  type DesktopFileReader,
   desktopFsCacheKey,
   desktopGitRoot,
   isReadFileErrorResult,
@@ -749,6 +750,7 @@ export function LocalFilePreview({
   onClose,
   onSelectRendered,
   reloadKey,
+  reader,
   target
 }: {
   /** Closes the preview's tab; offered when the file can't be shown. */
@@ -757,6 +759,8 @@ export function LocalFilePreview({
    *  `rendered` mode to the switcher and routes its selection to the pane. */
   onSelectRendered?: () => void
   reloadKey: number
+  /** Fixed backend reader implies a strictly read-only material preview. */
+  reader?: DesktopFileReader
   target: PreviewTarget
 }) {
   const { t } = useI18n()
@@ -787,7 +791,7 @@ export function LocalFilePreview({
   const readViewRef = useRef<HTMLDivElement>(null)
   const hoverRef = useRef(false)
   const connection = useStore($connection)
-  const fsCacheKey = desktopFsCacheKey(connection)
+  const fsCacheKey = reader?.key ?? desktopFsCacheKey(connection)
   const filePath = filePathForTarget(target)
   const isImage = target.previewKind === 'image'
   const isPdf = target.previewKind === 'pdf'
@@ -833,7 +837,7 @@ export function LocalFilePreview({
         if (isImage || isPdf) {
           // Prefer bytes the caller already handed us (a pasted/dropped
           // screenshot) over re-reading a path that may be transient/unreadable.
-          const dataUrl = target.dataUrl || (await readDesktopFileDataUrl(filePath))
+          const dataUrl = target.dataUrl || (await (reader?.readDataUrl ?? readDesktopFileDataUrl)(filePath))
 
           if (active) {
             setState({ dataUrl, loading: false })
@@ -842,7 +846,7 @@ export function LocalFilePreview({
           return
         }
 
-        const result = await readTextPreview(filePath)
+        const result = await (reader?.readText ?? readTextPreview)(filePath)
 
         if (active) {
           const shouldBlock = !forcePreview && (result.binary || (result.byteSize ?? 0) > TEXT_PREVIEW_MAX_BYTES)
@@ -859,7 +863,7 @@ export function LocalFilePreview({
           // Best-effort: fetch the file's working-tree-vs-HEAD diff so the
           // preview can offer a DIFF view when there are uncommitted changes.
           // Empty (clean file / not a repo / remote) just hides the option.
-          if (!shouldBlock) {
+          if (!shouldBlock && !reader) {
             try {
               const root = await desktopGitRoot(filePath)
               const diff = root ? await desktopFileDiff(root, filePath) : ''
@@ -906,6 +910,7 @@ export function LocalFilePreview({
     isPdf,
     isText,
     reloadKey,
+    reader,
     selfReload,
     target.dataUrl,
     target.language,
@@ -945,7 +950,7 @@ export function LocalFilePreview({
   // Editing is only offered for whole, readable text — never images, binaries,
   // or files we only loaded the first 512 KB of (saving would drop the tail).
   const canEdit =
-    isText && !isImage && !blockedByTarget && state.text !== undefined && !state.truncated && !state.binary
+    !reader && isText && !isImage && !blockedByTarget && state.text !== undefined && !state.truncated && !state.binary
 
   // Per-keystroke: update the draft ref (no render) and only set `dirty` when it
   // actually changes — React bails on an identical value, so a long typing run
@@ -1173,7 +1178,7 @@ export function LocalFilePreview({
     return (
       <PreviewEmptyState
         body={binary ? t.preview.binaryBody(target.label) : t.preview.largeBody(target.label, formatBytes(size))}
-        primaryAction={{ label: t.preview.previewAnyway, onClick: () => setForcePreview(true) }}
+        primaryAction={reader ? closeAction : { label: t.preview.previewAnyway, onClick: () => setForcePreview(true) }}
         title={binary ? t.preview.binaryTitle : t.preview.largeTitle}
         tone="warning"
       />

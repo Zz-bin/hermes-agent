@@ -18,6 +18,7 @@
 import {
   atom,
   captureGatewayFileDownload,
+  captureGatewayFileReader,
   host,
   type PluginOs,
   type PluginRestOptions,
@@ -34,6 +35,7 @@ import type {
   BoardImportResult,
   BoardMeta,
   BoardsResponse,
+  KanbanAttachment,
   KanbanBoard,
   KanbanProfile,
   KanbanProject,
@@ -388,12 +390,42 @@ export const orchestrationKey = (scope: string) => ['kanban', 'orchestration', s
 export const fetchBoard = (archived: boolean) =>
   call<KanbanBoard>(withBoard('/board', archived ? { include_archived: 'true' } : {}))
 
+// Owner-bound functions must survive task polling or an open material reader resets.
+const sourceReaders = new Map<string, ReturnType<typeof captureGatewayFileReader>>()
+
 export const fetchTask = async (id: string) => {
   const downloadAttachment = captureGatewayFileDownload()
-  const detail = await call<KanbanTaskDetail>(withBoard(`/tasks/${id}`))
+  const capturedReader = captureGatewayFileReader()
+  const reader = sourceReaders.get(capturedReader.key) ?? capturedReader
+  sourceReaders.set(reader.key, reader)
+  const path = withBoard(`/tasks/${id}`)
+  const detail = await call<KanbanTaskDetail>(path, { owner: reader.owner })
 
-  return { ...detail, downloadAttachment }
+  const originPath = (suffix: string) => {
+    const [base, query] = path.split('?')
+
+    return `${base}${suffix}${query ? `?${query}` : ''}`
+  }
+
+  const write = <T>(suffix: string, options: PluginRestOptions) =>
+    call<T>(originPath(suffix), { ...options, owner: reader.owner })
+
+  const actions = {
+    sourceKey: reader.key,
+    profiles: () => call<{ profiles: KanbanProfile[] }>('/profiles', { owner: reader.owner }),
+    read: () => call<KanbanTaskDetail>(path, { owner: reader.owner }),
+    readAttachment: (path: string) => reader.readDataUrl(path),
+    comment: (body: string) => write('/comments', { method: 'POST', body: { author: 'desktop', body } }),
+    upload: (upload: NonNullable<PluginRestOptions['upload']>) =>
+      write<{ attachment: KanbanAttachment }>('/attachments', { method: 'POST', upload }),
+    requeue: () => write('/reclaim', { method: 'POST', body: {} }),
+    reassign: (profile: string) => write('/reassign', { method: 'POST', body: { profile, reclaim_first: true } })
+  }
+
+  return { ...detail, downloadAttachment, reader, actions }
 }
+
+export type TaskActions = Awaited<ReturnType<typeof fetchTask>>['actions']
 
 /** Worker stdout/stderr tail (last 16 KiB — plenty for the drawer). */
 export const fetchLog = (id: string) => call<WorkerLog>(withBoard(`/tasks/${id}/log`, { tail: '16384' }))

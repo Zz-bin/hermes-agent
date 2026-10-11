@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "lost comment response is resolved against the real original database without a duplicate POST",
+    "byte-level recovery excludes the first saved image while resolving the second identical image with a lost response",
+    "partial-success manual continuation references both original attachment IDs without re-uploading either image"
+  ]
+}

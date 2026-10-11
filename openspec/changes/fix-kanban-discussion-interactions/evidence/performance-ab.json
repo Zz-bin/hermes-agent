@@ -1,0 +1,16 @@
+{
+  "platform": "Linux headless Chrome; synthetic 30 cards; 5 seconds each; single nonrandomized run",
+  "animation": {
+    "TaskDuration": 0.276057,
+    "LayoutDuration": 0,
+    "RecalcStyleDuration": 0.25499,
+    "ScriptDuration": 0
+  },
+  "staticArc": {
+    "TaskDuration": 0.005072999999999994,
+    "LayoutDuration": 0,
+    "RecalcStyleDuration": 0.00018299999999998873,
+    "ScriptDuration": 0
+  },
+  "limitation": "Not proof of user route, Mac thermal behavior, or production root cause; candidate CSS paint cost only"
+}

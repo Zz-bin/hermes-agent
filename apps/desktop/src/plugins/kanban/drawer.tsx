@@ -12,6 +12,7 @@ import {
   Codicon,
   compactNumber,
   CopyButton,
+  type DesktopFileReader,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -22,14 +23,12 @@ import {
   DropdownMenuTrigger,
   ErrorState,
   host,
-  isSubmitEnter,
   Loader,
   LogView,
   MessageTextContent,
   SegmentedControl,
   Textarea,
   Tip,
-  useI18n,
   useMutation,
   useQuery,
   useQueryClient,
@@ -39,24 +38,24 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 
 import {
   $boardSlug,
-  addComment,
   boardKeyPrefix,
   deleteTask,
   estimateTask,
   fetchLog,
-  fetchProfiles,
   fetchTask,
   logKey,
   patchTask,
-  profilesKey,
-  reassignTask,
   reclaimTask,
   routedToScope,
   taskKey,
   uploadAttachment,
   useKanbanScope
 } from './api'
+import { AssigneeMenu as CurrentAssigneeMenu } from './assignee-menu'
+import { Attachment } from './attachment'
+import { CommentComposer as FixedCommentComposer } from './comment-composer'
 import { handoffContext, resolveCommentContext } from './comment-context'
+import { CommentMarkdown } from './comment-markdown'
 import { type CommentSelection, CommentThread } from './comment-thread'
 import { ModelOverrideField, overridePatch } from './model-override'
 import {
@@ -71,7 +70,6 @@ import {
 } from './types'
 import {
   ago,
-  Avatar,
   Callout,
   columnLabel,
   duration,
@@ -299,49 +297,7 @@ function Diagnostics({
 /** Jira-style inline assignee editor: the meta row IS the control — click the
  *  assignee to reassign (reclaims a running worker first, resets the failure
  *  streak — the explicit human recovery action). */
-function AssigneeMenu({
-  current,
-  onReassign
-}: {
-  current: null | string | undefined
-  onReassign: (p: string) => void
-}) {
-  const k = useKanban()
-  const scope = useKanbanScope()
-  const { data: roster } = useQuery({ queryKey: profilesKey(scope), queryFn: fetchProfiles, staleTime: 60_000 })
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="-mx-1 inline-flex max-w-full items-center gap-1.5 rounded px-1 py-0.5 text-left transition-colors hover:bg-(--chrome-action-hover)"
-          type="button"
-        >
-          {current ? (
-            <>
-              <Avatar name={current} size="0.875rem" />
-              <span className="truncate">{current}</span>
-            </>
-          ) : (
-            <span className="text-(--ui-text-quaternary)">{k.unassigned}</span>
-          )}
-          <Codicon className="shrink-0 text-(--ui-text-quaternary)" name="chevron-down" size="0.65rem" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {(roster?.profiles ?? []).map(profile => (
-          <DropdownMenuItem key={profile.name} onSelect={() => onReassign(profile.name)}>
-            <Avatar name={profile.name} size="0.875rem" />
-            {profile.name}
-            {profile.name === current && <Codicon className="ml-auto" name="check" size="0.8rem" />}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-// Mirrors the review pane's commit-message field: one row tall to start
 // (button-height), CSS field-sizing grows it with content, button hugs the
 // bottom edge as it grows.
 //
@@ -350,85 +306,6 @@ function AssigneeMenu({
 // mid-run within a few seconds — no block/unblock dance. `onRequeue` is the
 // heavier option: post the note AND reclaim so the task restarts from scratch
 // with the note in context (use when the current run has gone off the rails).
-function CommentComposer({
-  onRequeue,
-  onSubmit,
-  pending,
-  running
-}: {
-  onRequeue?: (body: string) => void
-  onSubmit: (body: string) => void
-  pending: boolean
-  running?: boolean
-}) {
-  const k = useKanban()
-  const [body, setBody] = useState('')
-
-  const submit = () => {
-    const trimmed = body.trim()
-
-    if (trimmed && !pending) {
-      onSubmit(trimmed)
-      setBody('')
-    }
-  }
-
-  const requeue = () => {
-    const trimmed = body.trim()
-
-    if (trimmed && !pending && onRequeue) {
-      onRequeue(trimmed)
-      setBody('')
-    }
-  }
-
-  const empty = !body.trim() || pending
-  const sendLabel = running ? k.send : k.comment
-
-  // Sized like the new-project idea field (default control padding, inset icon
-  // action); a labelled text button floating inside the textarea read as part
-  // of the input.
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="relative">
-        <Textarea
-          className="field-sizing-content max-h-40 resize-none pr-9 text-[0.8125rem]"
-          onChange={event => setBody(event.target.value)}
-          onKeyDown={event => {
-            if (isSubmitEnter(event) && !event.shiftKey) {
-              event.preventDefault()
-              submit()
-            }
-          }}
-          placeholder={running ? k.messageWorker : k.addComment}
-          value={body}
-        />
-        <Tip label={sendLabel}>
-          <Button
-            aria-label={sendLabel}
-            className="absolute top-1 right-1 text-muted-foreground/80 hover:text-foreground"
-            disabled={empty}
-            onClick={submit}
-            size="icon-xs"
-            type="button"
-            variant="ghost"
-          >
-            <Codicon name="arrow-up" size="0.85rem" />
-          </Button>
-        </Tip>
-      </div>
-      {running && onRequeue && (
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[0.625rem] leading-tight text-(--ui-text-quaternary)">{k.deliveredLive}</span>
-          <Button className="shrink-0" disabled={empty} onClick={requeue} size="xs" variant="outline">
-            <Codicon name="debug-restart" size="0.7rem" />
-            {k.requeueWithNote}
-          </Button>
-        </div>
-      )}
-    </div>
-  )
-}
 
 function DescriptionSection({ body, onSave }: { body: null | string | undefined; onSave: (body: string) => void }) {
   const k = useKanban()
@@ -514,48 +391,19 @@ const isAdminSummary = (summary: string) => /^status changed to \w+ \(dashboard\
 // The filename is the download action. The path is the backend's own
 // stored_path, saved through the connection/profile that returned this detail;
 // a row without one (older backend) stays inert rather than guessing a path.
-function AttachmentDownload({
-  attachment,
-  onDownload
-}: {
-  attachment: KanbanAttachment
-  onDownload: (path: string, suggestedName: string) => Promise<void>
-}) {
-  const { t } = useI18n()
-  const path = attachment.stored_path?.trim()
-
-  const download = useMutation({
-    mutationFn: () => onDownload(path!, attachment.filename)
-  })
-
-  // Long names truncate in the narrow sidebar; the tip reveals the full name.
-  return (
-    <Tip label={attachment.filename} placement="row">
-      <Button
-        aria-label={`${t.fileMenu.download} ${attachment.filename}`}
-        className="max-w-full justify-start font-normal"
-        disabled={!path || download.isPending}
-        onClick={() => download.mutate()}
-        size="inline"
-        variant="text"
-      >
-        <Codicon name={download.isPending ? 'sync' : 'cloud-download'} size="0.75rem" spinning={download.isPending} />
-        <span className="truncate">{attachment.filename}</span>
-      </Button>
-    </Tip>
-  )
-}
 
 function AttachmentsSection({
   attachments,
   onDownload,
   onUpload,
-  pending
+  pending,
+  reader
 }: {
   attachments: KanbanAttachment[]
   onDownload: (path: string, suggestedName: string) => Promise<void>
   onUpload: (file: File) => void
   pending: boolean
+  reader: DesktopFileReader
 }) {
   const k = useKanban()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -595,7 +443,7 @@ function AttachmentsSection({
         <ul className="flex flex-col gap-1">
           {attachments.map(attachment => (
             <li className="flex items-center gap-1.5 text-[0.75rem] text-(--ui-text-tertiary)" key={attachment.id}>
-              <AttachmentDownload attachment={attachment} onDownload={onDownload} />
+              <Attachment attachment={attachment} key={reader.key} onDownload={onDownload} reader={reader} />
             </li>
           ))}
         </ul>
@@ -714,20 +562,14 @@ function LinkChips({
  *  selected Jira-style with a segmented control ("Activity ▸ Show: …"). The
  *  control hides itself when only comments exist — nothing to switch to. */
 function FeedTabs({
-  commentPending,
   detail,
   log,
-  onComment,
-  onRequeue,
   onSelection,
   selection,
   running
 }: {
-  commentPending: boolean
-  detail: KanbanTaskDetail
+  detail: Awaited<ReturnType<typeof fetchTask>>
   log: null | WorkerLog
-  onComment: (body: string) => void
-  onRequeue: (body: string) => void
   onSelection: (next: CommentSelection) => void
   selection: CommentSelection
   running: boolean
@@ -765,10 +607,16 @@ function FeedTabs({
             comments={detail.comments}
             k={k}
             onChange={onSelection}
-            renderBody={body => <TaskMarkdown text={body} />}
+            renderBody={body => (
+              <CommentMarkdown
+                attachments={detail.attachments ?? []}
+                onDownload={detail.downloadAttachment}
+                reader={detail.reader}
+                text={body}
+              />
+            )}
             selection={selection}
           />
-          <CommentComposer onRequeue={onRequeue} onSubmit={onComment} pending={commentPending} running={running} />
         </>
       )}
       {tab === 'activity' && (
@@ -946,27 +794,6 @@ export function TaskDrawer({
       (err: unknown) => host.notify({ kind: 'error', message: errText(err) })
     )
 
-  const commentMut = useMutation({
-    mutationFn: (body: string) => addComment(id!, body),
-    onError: err => host.notify({ kind: 'error', message: errText(err) }),
-    onSuccess: invalidate
-  })
-
-  // "Note & requeue" for a running task: post the note, then reclaim so the
-  // dispatcher re-runs it with the note in the worker's context — the one-click
-  // replacement for the block → comment → unblock dance.
-  const requeueMut = useMutation({
-    mutationFn: async (body: string) => {
-      await addComment(id!, body)
-      await reclaimTask(id!)
-    },
-    onError: err => host.notify({ kind: 'error', message: errText(err) }),
-    onSuccess: () => {
-      host.notify({ kind: 'info', message: k.notePosted })
-      invalidate()
-    }
-  })
-
   const uploadMut = useMutation({
     mutationFn: async (file: File) =>
       uploadAttachment(id!, {
@@ -1018,6 +845,14 @@ export function TaskDrawer({
       >
         <header className="flex flex-col gap-2 px-5 pt-4 pb-3">
           <div className="flex items-center gap-2">
+            {task && detail && (
+              <CurrentAssigneeMenu
+                actions={detail.actions}
+                current={task.assignee}
+                onSaved={invalidate}
+                running={running}
+              />
+            )}
             {task ? (
               <StatusMenu columns={columns} onMove={move} status={task.status} />
             ) : (
@@ -1088,8 +923,8 @@ export function TaskDrawer({
               <Loader type="lemniscate-bloom" />
             </div>
           ) : (
-            <div className="kanban-detail-columns flex min-h-0 flex-1">
-              <div className="min-w-0 flex-1 overflow-y-auto px-5 pb-5">
+            <div className="kanban-detail-columns flex min-h-0 flex-1" data-kanban-scroller>
+              <div className="min-w-0 flex-1 overflow-y-auto px-5 pb-5" data-kanban-scroller>
                 <div className="flex flex-col gap-5">
                   {task.status === 'ready' && !task.assignee && !defaultAssignee && (
                     <Callout title={k.readyUnassignedTitle} tone={SEVERITY_TONE.warning}>
@@ -1134,12 +969,10 @@ export function TaskDrawer({
                   )}
 
                   <FeedTabs
-                    commentPending={commentMut.isPending || requeueMut.isPending}
                     detail={detail}
                     key={`comments:${selectionKey}`}
                     log={log ?? null}
-                    onComment={body => commentMut.mutate(body)}
-                    onRequeue={body => requeueMut.mutate(body)}
+
                     onSelection={onSelection}
                     running={running}
                     selection={selection}
@@ -1179,7 +1012,12 @@ export function TaskDrawer({
                           <ul>
                             {contextAttachments.map(attachment => (
                               <li key={attachment.id}>
-                                <AttachmentDownload attachment={attachment} onDownload={detail.downloadAttachment} />
+                                <Attachment
+                                  attachment={attachment}
+                                  key={detail.reader.key}
+                                  onDownload={detail.downloadAttachment}
+                                  reader={detail.reader}
+                                />
                               </li>
                             ))}
                           </ul>
@@ -1194,7 +1032,11 @@ export function TaskDrawer({
                         )}
                         {snapshot?.material_paths?.map(path => (
                           <div className="flex min-w-0 items-start gap-1" key={path}>
-                            <code className="min-w-0 break-all text-[0.6875rem]">{path}</code>
+                            <Attachment
+                              attachment={{ id: path, filename: path, stored_path: path }}
+                              onDownload={detail.downloadAttachment}
+                              reader={detail.reader}
+                            />
                             <CopyButton text={path} />
                           </div>
                         ))}
@@ -1209,12 +1051,6 @@ export function TaskDrawer({
                     {k.currentProperties}
                   </summary>
                   <div className="mt-3 flex flex-col gap-4">
-                    <MetaRow label={k.assignee}>
-                      <AssigneeMenu
-                        current={task.assignee}
-                        onReassign={profile => void mutate(() => reassignTask(task.id, profile))()}
-                      />
-                    </MetaRow>
                     {typeof task.priority === 'number' && (
                       <MetaRow label={k.metaPriority}>
                         <PriorityGlyph priority={task.priority} />
@@ -1284,12 +1120,25 @@ export function TaskDrawer({
                     onDownload={detail.downloadAttachment}
                     onUpload={file => uploadMut.mutate(file)}
                     pending={uploadMut.isPending}
+                    reader={detail.reader}
                   />
                 )}
               </aside>
             </div>
           )}
         </div>
+        {detail && task && !errorMessage && (
+          <div className="kanban-composer shrink-0 border-t border-(--ui-stroke-tertiary) px-5 py-3">
+            <FixedCommentComposer
+              actions={detail.actions}
+              draftKey={`${selectionKey}:${detail.reader.key}`}
+              imagesSupported={Array.isArray(detail.attachments)}
+              key={`composer:${selectionKey}:${detail.reader.key}`}
+              onSaved={invalidate}
+              running={running}
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

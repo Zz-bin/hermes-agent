@@ -47,6 +47,8 @@ export interface PluginRestOptions {
   /** Single-file multipart upload (see HermesApiRequest.upload). */
   upload?: { filename: string; contentType?: string; bytes: ArrayBuffer }
   timeoutMs?: number
+  /** Fixed origin for a multi-step operation on a previously fetched resource. */
+  owner?: { connectionId: string | undefined; profile: string | undefined }
 }
 
 // Normalize `path` to a leading-slash suffix relative to `/api/plugins/<id>`.
@@ -76,13 +78,18 @@ export async function pluginRest<T>(pluginId: string, path: string, opts: Plugin
 
   const suffix = pluginPathSuffix('pluginRest', path)
 
+  if (opts.owner && !opts.owner.connectionId && getApiRequestConnection()) {
+    throw new Error('Original task connection is unavailable')
+  }
+
   return hermesApi<T>({
     path: `/api/plugins/${pluginId}${suffix}`,
     method: opts.method,
     body: opts.body,
     upload: opts.upload,
     timeoutMs: opts.timeoutMs,
-    ...profileScoped()
+    ...profileScoped(),
+    ...(opts.owner ? opts.owner : {})
   })
 }
 
