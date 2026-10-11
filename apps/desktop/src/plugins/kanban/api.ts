@@ -415,7 +415,15 @@ export const fetchTask = async (id: string) => {
     profiles: () => call<{ profiles: KanbanProfile[] }>('/profiles', { owner: reader.owner }),
     read: () => call<KanbanTaskDetail>(path, { owner: reader.owner }),
     readAttachment: (path: string) => reader.readDataUrl(path),
-    comment: (body: string) => write('/comments', { method: 'POST', body: { author: 'desktop', body } }),
+    comment: (body: string, attachmentIds: number[] = []) =>
+      write('/comments', {
+        method: 'POST',
+        body: {
+          author: 'desktop',
+          body,
+          ...(attachmentIds.length ? { context: { kind: 'materials', attachment_ids: attachmentIds } } : {})
+        }
+      }),
     upload: (upload: NonNullable<PluginRestOptions['upload']>) =>
       write<{ attachment: KanbanAttachment }>('/attachments', { method: 'POST', upload }),
     requeue: () => write('/reclaim', { method: 'POST', body: {} }),

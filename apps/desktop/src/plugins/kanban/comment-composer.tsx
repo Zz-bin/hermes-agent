@@ -22,6 +22,7 @@ interface CommentComposerProps {
 }
 interface UncertainWrite {
   body?: string
+  attachmentIds?: number[]
   restart?: boolean
   baseline: Set<string>
   image?: DraftImage
@@ -162,7 +163,8 @@ export function CommentComposer({ actions, draftKey, imagesSupported, running, o
           comment =>
             !uncertain.baseline.has(String(comment.id)) &&
             comment.author === 'desktop' &&
-            comment.body === uncertain.body
+            comment.body === uncertain.body &&
+            (uncertain.attachmentIds ?? []).every(id => comment.context?.attachment_ids.includes(id) === true)
         )
 
         if (found) {
@@ -231,15 +233,8 @@ export function CommentComposer({ actions, draftKey, imagesSupported, running, o
           }
         }
 
-        const text = [
-          body.trim(),
-          ...images.map(
-            image =>
-              `![${image.attachment!.filename.replace(/[[\]\\]/g, '')}](kanban-attachment:${image.attachment!.id})`
-          )
-        ]
-          .filter(Boolean)
-          .join('\n\n')
+        const text = body.trim()
+        const attachmentIds = images.map(image => Number(image.attachment!.id))
 
         const detail = await actions.read()
 
@@ -247,8 +242,13 @@ export function CommentComposer({ actions, draftKey, imagesSupported, running, o
           return
         }
 
-        write = { body: text, restart, baseline: new Set(detail.comments.map(comment => String(comment.id))) }
-        await actions.comment(text)
+        write = {
+          body: text,
+          attachmentIds,
+          restart,
+          baseline: new Set(detail.comments.map(comment => String(comment.id)))
+        }
+        await actions.comment(text, attachmentIds)
         write = null
         clear()
         onSaved()

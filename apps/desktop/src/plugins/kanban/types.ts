@@ -82,7 +82,7 @@ export interface KanbanRun {
   ended_at?: null | number
 }
 
-export interface KanbanCommentContext {
+export interface KanbanHandoffContext {
   version: 1
   kind: 'handoff'
   phase: null | string
@@ -95,6 +95,14 @@ export interface KanbanCommentContext {
   verification?: null | string
   approval_scope?: null | string
 }
+
+export interface KanbanCommentMaterialsContext {
+  version: 1
+  kind: 'materials'
+  attachment_ids: number[]
+}
+
+export type KanbanCommentContext = KanbanHandoffContext | KanbanCommentMaterialsContext
 
 export interface KanbanComment {
   id: number | string

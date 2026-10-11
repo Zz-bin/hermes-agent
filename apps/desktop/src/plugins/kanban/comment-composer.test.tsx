@@ -125,9 +125,7 @@ it('retains successful image IDs across a partial upload and does not upload rem
     'second.png',
     'second.png'
   ])
-  expect(actions.comment).toHaveBeenCalledWith(
-    '![first.png](kanban-attachment:1)\n\n![second.png](kanban-attachment:2)'
-  )
+  expect(actions.comment).toHaveBeenCalledWith('', [1, 2])
   await act(async () => {})
 })
 
@@ -201,7 +199,7 @@ it('identifies renamed committed images by original bytes rather than a same-siz
   fireEvent.click(await screen.findByRole('button', { name: en.checkOriginalTask }))
   await screen.findByText(en.imageSaved)
   fireEvent.click(screen.getByRole('button', { name: en.comment }))
-  await waitFor(() => expect(actions.comment).toHaveBeenCalledWith('![same (1).png](kanban-attachment:7)'))
+  await waitFor(() => expect(actions.comment).toHaveBeenCalledWith('', [7]))
   expect(actions.upload).toHaveBeenCalledTimes(1)
   expect(actions.readAttachment).toHaveBeenCalledTimes(2)
 })

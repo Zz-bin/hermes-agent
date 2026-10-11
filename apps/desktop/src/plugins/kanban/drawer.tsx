@@ -637,14 +637,7 @@ function FeedTabs({
             comments={detail.comments}
             k={k}
             onChange={onSelection}
-            renderBody={body => (
-              <CommentMarkdown
-                attachments={detail.attachments ?? []}
-                onDownload={detail.downloadAttachment}
-                reader={detail.reader}
-                text={body}
-              />
-            )}
+            renderBody={body => <CommentMarkdown text={body} />}
             selection={selection}
           />
         </>

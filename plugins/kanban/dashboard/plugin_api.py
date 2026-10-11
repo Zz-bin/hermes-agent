@@ -796,8 +796,6 @@ class CommentBody(BaseModel):
 
 @router.post("/tasks/{task_id}/comments")
 def add_comment(task_id: str, payload: CommentBody, board: Optional[str] = Query(None)):
-    if not payload.body.strip():
-        raise HTTPException(status_code=400, detail="body is required")
     with _board_conn(board) as (board, conn), _value_error_400():
         _require_task(conn, task_id)
         kanban_db.add_comment(conn, task_id, author=payload.author or "dashboard", body=payload.body, context=payload.context)

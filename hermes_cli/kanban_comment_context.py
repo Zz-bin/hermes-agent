@@ -1,4 +1,4 @@
-"""Versioned, server-captured comment handoffs; no historical backfilling."""
+"""Server-captured comment handoffs and validated comment material references."""
 from __future__ import annotations
 
 import re
@@ -9,7 +9,7 @@ FORMAL_HEADER = re.compile(
 
 
 def capture_context(conn, task, body: str, context=None):
-    """Accept declaration fields only; snapshot fields are never caller supplied."""
+    """Validate comment materials and capture handoff snapshots on the server."""
     header = FORMAL_HEADER.match(body.lstrip())
     if context is None:
         if not header:
@@ -17,6 +17,21 @@ def capture_context(conn, task, body: str, context=None):
         context = {"kind": "handoff", "phase": header.group(2).strip()}
     if not isinstance(context, dict):
         raise ValueError("comment context must be an object")
+    if context.get("kind") == "materials":
+        if set(context) - {"kind", "attachment_ids"}:
+            raise ValueError("comment materials context only accepts attachment_ids")
+        ids = context.get("attachment_ids", [])
+        if not isinstance(ids, list) or len(ids) > 100 or any(type(i) is not int or i < 1 for i in ids):
+            raise ValueError("context.attachment_ids must contain at most 100 positive integer ids")
+        ids = list(dict.fromkeys(ids))
+        if not ids:
+            raise ValueError("comment materials must include at least one attachment")
+        for aid in ids:
+            if not conn.execute("SELECT 1 FROM task_attachments WHERE id=? AND task_id=?", (aid, task.id)).fetchone():
+                raise ValueError(f"attachment {aid} does not belong to task {task.id}")
+        if not header:
+            return {"version": 1, "kind": "materials", "attachment_ids": ids}
+        context = {"kind": "handoff", "phase": header.group(2).strip(), "attachment_ids": ids}
     if set(context) - {"kind", "phase", "attachment_ids", "material_paths", "verification", "approval_scope"}:
         raise ValueError("unknown comment context fields; snapshots are server-captured")
     if context.get("kind") != "handoff":

@@ -1770,8 +1770,6 @@ def task_graph_context(conn: sqlite3.Connection, task_id: str) -> dict:
 # --- Comments & events ---
 
 def add_comment(conn: sqlite3.Connection, task_id: str, author: str, body: str, *, context: Optional[dict] = None) -> int:
-    if not body or not body.strip():
-        raise ValueError("comment body is required")
     if not author or not author.strip():
         raise ValueError("comment author is required")
     now = int(time.time())
@@ -1781,6 +1779,9 @@ def add_comment(conn: sqlite3.Connection, task_id: str, author: str, body: str, 
         _require_task(conn, task_id)
         from hermes_cli.kanban_comment_context import capture_context
         snapshot = capture_context(conn, get_task(conn, task_id), body, context)
+        if not body or not body.strip():
+            if not (snapshot and snapshot.get("kind") == "materials" and snapshot.get("attachment_ids")):
+                raise ValueError("comment body is required")
         cur = conn.execute(
             "INSERT INTO task_comments (task_id, author, body, created_at, context) "
             "VALUES (?, ?, ?, ?, ?)", (task_id, author.strip(), body.strip(), now,

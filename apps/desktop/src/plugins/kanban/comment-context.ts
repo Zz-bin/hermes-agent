@@ -1,9 +1,9 @@
-import type { KanbanAttachment, KanbanComment, KanbanCommentContext } from './types'
+import type { KanbanAttachment, KanbanComment, KanbanHandoffContext } from './types'
 
 const formalHeader =
   /^【(请求批准|交付审查|审查结论|返工要求|阻塞求决|收尾交付|实现完成|审查通过|退回修改|需要输入|规划完成|请求审查)[｜|]([^】]+)】/
 
-export function handoffContext(comment: KanbanComment): KanbanCommentContext | null {
+export function handoffContext(comment: KanbanComment): KanbanHandoffContext | null {
   const context = comment.context
 
   if (
@@ -37,6 +37,17 @@ export function handoffContext(comment: KanbanComment): KanbanCommentContext | n
   }
 
   return context
+}
+
+function commentMaterialsContext(comment: KanbanComment): number[] {
+  const context = comment.context
+
+  return context?.version === 1 &&
+    context.kind === 'materials' &&
+    Array.isArray(context.attachment_ids) &&
+    context.attachment_ids.every(id => Number.isSafeInteger(id) && id > 0)
+    ? context.attachment_ids
+    : []
 }
 
 export function isHandoff(comment: KanbanComment): boolean {
@@ -77,7 +88,9 @@ export function resolveCommentContext(
 }
 
 export function commentAttachments(comment: KanbanComment, attachments: KanbanAttachment[]): KanbanAttachment[] {
-  const declared = new Set((handoffContext(comment)?.attachment_ids ?? []).map(String))
+  const declared = new Set(
+    [...(handoffContext(comment)?.attachment_ids ?? []), ...commentMaterialsContext(comment)].map(String)
+  )
 
   const images = new Set(
     Array.from(comment.body.matchAll(/!\[[^\]\n]*\]\(kanban-attachment:(\d+)\)/g), match => match[1])

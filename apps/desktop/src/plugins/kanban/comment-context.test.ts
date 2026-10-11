@@ -7,9 +7,9 @@ import {
   resolveCommentContext,
   visibleComments
 } from './comment-context'
-import type { KanbanComment, KanbanCommentContext } from './types'
+import type { KanbanComment, KanbanHandoffContext } from './types'
 
-const snapshot: KanbanCommentContext = {
+const snapshot: KanbanHandoffContext = {
   version: 1,
   kind: 'handoff',
   assignee: 'builder',
@@ -45,6 +45,12 @@ describe('comment context', () => {
     expect(commentAttachments({ ...comment, context: { ...snapshot, attachment_ids: [4] } }, attachments)).toEqual(
       attachments.slice(0, 3)
     )
+    expect(
+      commentAttachments(
+        { ...comment, body: '', context: { version: 1, kind: 'materials', attachment_ids: [2] } },
+        attachments
+      )
+    ).toEqual([attachments[1]])
   })
   it('recognizes contract handoffs and aliases without inventing legacy snapshots or approval', () => {
     const headers = [
@@ -121,7 +127,7 @@ describe('comment context', () => {
       { ...snapshot, attachment_ids: [true] },
       { ...snapshot, material_paths: 1 }
     ]) {
-      expect(handoffContext({ ...comments[0], context: context as KanbanCommentContext })).toBeNull()
+      expect(handoffContext({ ...comments[0], context: context as KanbanHandoffContext })).toBeNull()
     }
   })
 })
