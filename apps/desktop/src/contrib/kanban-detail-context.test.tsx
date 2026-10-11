@@ -193,6 +193,29 @@ describe('native TaskDrawer comment inspection', () => {
     fireEvent.click(globalThis.document.querySelector('[data-floor-id="1"]')!)
     expect(context().dataset.commentContext).toBe('1')
   })
+  it('includes images sent in ordinary comments and follows the selected comment', async () => {
+    mocks.fetchTask.mockImplementation(async (id: string) => {
+      const value = detail(id)
+      value.comments[2].body = 'User image\n\n![pasted.png](kanban-attachment:3)'
+      value.attachments!.push({
+        id: 3,
+        filename: 'pasted.png',
+        stored_path: '/test/pasted.png',
+        content_type: 'image/png'
+      })
+
+      return value
+    })
+    mount()
+    await screen.findByText('Task A')
+    expect(within(context()).getByText('pasted.png')).toBeTruthy()
+    expect(within(context()).getByText(en.notRecorded)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Select comment #1 builder' }))
+    expect(within(context()).queryByText('pasted.png')).toBeNull()
+    expect(within(context()).getByText('first.svg')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: en.clearCommentSelection }))
+    expect(within(context()).getByText('pasted.png')).toBeTruthy()
+  })
   it('discussion exposes missing history, never the current owner', async () => {
     mount()
     await screen.findByText('Task A')

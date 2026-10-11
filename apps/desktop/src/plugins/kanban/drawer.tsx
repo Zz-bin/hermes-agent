@@ -55,7 +55,7 @@ import {
 import { AssigneeMenu as CurrentAssigneeMenu } from './assignee-menu'
 import { Attachment } from './attachment'
 import { CommentComposer as FixedCommentComposer } from './comment-composer'
-import { handoffContext, resolveCommentContext } from './comment-context'
+import { commentAttachments, handoffContext, resolveCommentContext } from './comment-context'
 import { CommentMarkdown } from './comment-markdown'
 import { type CommentSelection, CommentThread } from './comment-thread'
 import { ModelOverrideField, overridePatch } from './model-override'
@@ -759,9 +759,7 @@ export function TaskDrawer({
   const contextComment = resolveCommentContext(detail?.comments ?? [], selection.selected, selection.author)
   const snapshot = contextComment ? handoffContext(contextComment) : null
 
-  const contextAttachments = (detail?.attachments ?? []).filter(attachment =>
-    snapshot?.attachment_ids.includes(Number(attachment.id))
-  )
+  const contextAttachments = contextComment ? commentAttachments(contextComment, detail?.attachments ?? []) : []
 
   const running = task?.status === 'running'
   const defaultAssignee = useDefaultAssignee()

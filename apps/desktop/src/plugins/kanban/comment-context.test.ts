@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { handoffContext, isHandoff, resolveCommentContext, visibleComments } from './comment-context'
+import {
+  commentAttachments,
+  handoffContext,
+  isHandoff,
+  resolveCommentContext,
+  visibleComments
+} from './comment-context'
 import type { KanbanComment, KanbanCommentContext } from './types'
 
 const snapshot: KanbanCommentContext = {
@@ -21,6 +27,25 @@ const comments: KanbanComment[] = [
 ]
 
 describe('comment context', () => {
+  it('merges declared materials with sent images without duplicates or unrelated attachments', () => {
+    const attachments = [
+      { id: 1, filename: 'first.png', content_type: 'image/png' },
+      { id: 2, filename: 'second.png', content_type: 'image/png' },
+      { id: 4, filename: 'report.pdf', content_type: 'application/pdf' },
+      { id: 5, filename: 'other.png', content_type: 'image/png' }
+    ]
+
+    const comment = {
+      ...comments[0],
+      body: '![first](kanban-attachment:1) ![second](kanban-attachment:2) ![repeat](kanban-attachment:2) ![missing](kanban-attachment:3) ![not-image](kanban-attachment:4)'
+    }
+
+    expect(commentAttachments(comment, attachments)).toEqual(attachments.slice(0, 2))
+    expect(commentAttachments({ ...comment, context: undefined }, attachments)).toEqual(attachments.slice(0, 2))
+    expect(commentAttachments({ ...comment, context: { ...snapshot, attachment_ids: [4] } }, attachments)).toEqual(
+      attachments.slice(0, 3)
+    )
+  })
   it('recognizes contract handoffs and aliases without inventing legacy snapshots or approval', () => {
     const headers = [
       '请求批准',
