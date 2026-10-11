@@ -22,7 +22,7 @@ it('keeps card-local numbering tied to original identity through sorting and fil
   expect([...commentFloors(comments.filter(comment => comment.id !== 98)).keys()]).toEqual(['96', '104'])
 })
 
-it('scores occupied reading area with continuity and clamps the rail to the visible middle', () => {
+it('tracks occupied reading area and keeps the whole compact directory centered and visible', () => {
   const floors = [
     { id: 'long', top: -100, bottom: 900 },
     { id: 'short', top: 900, bottom: 950 }
@@ -41,15 +41,34 @@ it('scores occupied reading area with continuity and clamps the rail to the visi
     )
   ).toBe('a')
   expect(readingFloor([], 0, 200, 'a')).toBeNull()
+  expect(
+    readingFloor(
+      [
+        { id: 'short', top: 0, bottom: 50 },
+        { id: 'reading', top: 50, bottom: 500 }
+      ],
+      0,
+      400,
+      'short'
+    )
+  ).toBe('reading')
   const region = { top: -300, bottom: 1000 }
-  const position = directoryPosition(region, { top: 0, bottom: 400 })
-  expect(region.top + position.top).toBe(200)
-  const low = directoryPosition({ top: 300, bottom: 1000 }, { top: 0, bottom: 400 })
+  const position = directoryPosition(region, { top: 0, bottom: 400 }, 25)
+  expect(region.top + position.top + position.height / 2).toBe(200)
+  const low = directoryPosition({ top: 300, bottom: 1000 }, { top: 0, bottom: 400 }, 25)
   expect(300 + low.top + low.height).toBeLessThan(400)
   expect(low.top).toBeGreaterThanOrEqual(0)
-  const ended = directoryPosition({ top: -100, bottom: 50 }, { top: 0, bottom: 400 })
+  const ended = directoryPosition({ top: -100, bottom: -1 }, { top: 0, bottom: 400 }, 25)
   expect(ended.height).toBe(0)
-  expect(-100 + ended.top).toBeLessThanOrEqual(50)
+
+  for (const count of [1, 10, 25, 100, 1000]) {
+    for (const viewport of [120, 400, 900]) {
+      const layout = directoryPosition(region, { top: 0, bottom: viewport }, count)
+      expect(layout.height).toBeLessThanOrEqual(count * 12)
+      expect(region.top + layout.top).toBeGreaterThanOrEqual(8)
+      expect(region.top + layout.top + layout.height).toBeLessThanOrEqual(viewport - 8)
+    }
+  }
 })
 
 it('releases located floors only for unconsumed keyboard intent followed by main-column displacement', () => {
@@ -149,6 +168,19 @@ it('releases located floors only for unconsumed keyboard intent followed by main
         expect(hook.result.current.active).toBe('second')
       }
     }
+
+    reset()
+    const directory = document.createElement('nav')
+    directory.dataset.kanbanDirectory = ''
+    first.append(directory)
+    fireEvent.wheel(directory)
+    fireEvent.scroll(scroller)
+    flush()
+    expect(hook.result.current.active).toBe('first')
+    scroller.scrollTop = 200
+    fireEvent.scroll(scroller)
+    flush()
+    expect(hook.result.current.active).toBe('second')
 
     for (const kind of ['textarea', 'input', 'select', 'editable', 'directory', 'preview', 'consumed']) {
       const control = document.createElement(['textarea', 'input', 'select'].includes(kind) ? kind : 'div')

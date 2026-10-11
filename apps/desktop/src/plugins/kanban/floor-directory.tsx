@@ -130,21 +130,6 @@ export function FloorDirectory({ active, comments, floors, k, nav, onLocate }: F
   const lines = useRef<HTMLDivElement>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [message, setMessage] = useState('')
-  useEffect(() => {
-    const viewport = lines.current
-
-    const button = Array.from(viewport?.querySelectorAll<HTMLElement>('[data-floor-id]') ?? []).find(
-      item => item.dataset.floorId === active
-    )
-
-    if (viewport && button) {
-      if (button.offsetTop < viewport.scrollTop) {
-        viewport.scrollTop = button.offsetTop
-      } else if (button.offsetTop + button.offsetHeight > viewport.scrollTop + viewport.clientHeight) {
-        viewport.scrollTop = button.offsetTop + button.offsetHeight - viewport.clientHeight
-      }
-    }
-  }, [active])
 
   if (!comments.length) {
     return null
@@ -175,10 +160,6 @@ export function FloorDirectory({ active, comments, floors, k, nav, onLocate }: F
                   const buttons = lines.current?.querySelectorAll<HTMLButtonElement>('[data-floor-id]')
                   const button = buttons?.[Math.max(0, Math.min(comments.length - 1, offsets[event.key]))]
                   button?.focus({ preventScroll: true })
-
-                  if (button && lines.current) {
-                    lines.current.scrollTop = button.offsetTop - lines.current.clientHeight / 2
-                  }
                 }
               }}
               onLocate={() => {

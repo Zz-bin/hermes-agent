@@ -21,7 +21,7 @@ export function readingFloor(floors: FloorBounds[], top: number, bottom: number,
       return [
         {
           ...floor,
-          score: visible / Math.min(floor.bottom - floor.top, bottom - top),
+          score: visible / (bottom - top),
           distance: Math.abs((Math.max(top, floor.top) + Math.min(bottom, floor.bottom)) / 2 - (top + bottom) / 2)
         }
       ]
@@ -31,14 +31,18 @@ export function readingFloor(floors: FloorBounds[], top: number, bottom: number,
   const previous = candidates.find(floor => floor.id === current)
   const best = candidates[0]
 
-  return previous && best.score < previous.score + 0.15 ? previous.id : (best?.id ?? null)
+  return previous && best.score <= previous.score ? previous.id : (best?.id ?? null)
 }
 
-export function directoryPosition(region: { top: number; bottom: number }, bounds: { top: number; bottom: number }) {
-  const middle = (bounds.top + bounds.bottom) / 2
-  const bottom = Math.min(bounds.bottom, region.bottom)
-  const top = Math.min(region.bottom, Math.max(region.top, middle))
-  const height = Math.max(0, Math.min(240, bottom - top - 8))
+export function directoryPosition(
+  region: { top: number; bottom: number },
+  bounds: { top: number; bottom: number },
+  count: number
+) {
+  const topEdge = Math.max(region.top, bounds.top + 8)
+  const bottomEdge = Math.min(region.bottom, bounds.bottom - 8)
+  const height = Math.max(0, Math.min(count * 12, 240, bottomEdge - topEdge))
+  const top = Math.max(topEdge, Math.min((bounds.top + bounds.bottom - height) / 2, bottomEdge - height))
 
   return { height, top: top - region.top }
 }
@@ -80,7 +84,7 @@ export function useDiscussionPosition(
       frame = 0
       const bounds = scroller.getBoundingClientRect()
       const region = element.getBoundingClientRect()
-      const position = directoryPosition(region, bounds)
+      const position = directoryPosition(region, bounds, nodes.length)
 
       const floors = nodes.map(item => {
         const rect = item.getBoundingClientRect()
@@ -88,7 +92,7 @@ export function useDiscussionPosition(
         return { id: item.dataset.commentId!, top: rect.top, bottom: rect.bottom }
       })
 
-      rail.style.visibility = position.height >= 24 ? 'visible' : 'hidden'
+      rail.style.visibility = position.height > 0 ? 'visible' : 'hidden'
       rail.style.top = `${position.top}px`
       rail.style.height = `${position.height}px`
 
@@ -138,7 +142,8 @@ export function useDiscussionPosition(
       const target = event.target as HTMLElement
 
       if (
-        target.closest('[data-kanban-directory], [data-kanban-preview]') ||
+        target.closest('[data-kanban-preview]') ||
+        (event.type === 'keydown' && target.closest('[data-kanban-directory]')) ||
         (event.type === 'keydown' &&
           target.closest('textarea, input, select, [contenteditable]:not([contenteditable="false"])'))
       ) {
