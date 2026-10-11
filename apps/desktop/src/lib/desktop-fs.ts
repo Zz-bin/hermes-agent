@@ -1,4 +1,4 @@
-import { hermesApi } from '@/api/client'
+import { capabilityScoped, hermesApi } from '@/api/client'
 import type {
   HermesConnection,
   HermesReadDirResult,
@@ -86,6 +86,37 @@ export async function readDesktopFileText(path: string): Promise<HermesReadFileT
   }
 
   return remoteFsApi<HermesReadFileTextResult>(fsPath('read-text', path))
+}
+
+export interface DesktopFileReader {
+  key: string
+  owner: { connectionId: string | undefined; profile: string | undefined }
+  readText: (path: string) => Promise<HermesReadFileTextResult>
+  readDataUrl: (path: string) => Promise<string>
+}
+
+/** Backend-owned materials must never use a client-local filesystem fallback. */
+export function captureGatewayFileReader(): DesktopFileReader {
+  const { connectionId, profile } = capabilityScoped()
+
+  const read = <T>(endpoint: string, path: string) => {
+    if (!connectionId && capabilityScoped().connectionId !== connectionId) {
+      return Promise.reject(new Error('Original file connection is unavailable'))
+    }
+
+    return hermesApi<T>({ path: fsPath(endpoint, path), connectionId, profile })
+  }
+
+  return {
+    key: JSON.stringify([connectionId, profile]),
+    owner: { connectionId, profile },
+    readText: path => read<HermesReadFileTextResult>('read-text', path),
+    readDataUrl: async path => {
+      const result = await read<string | { dataUrl?: string }>('read-data-url', path)
+
+      return typeof result === 'string' ? result : result.dataUrl || ''
+    }
+  }
 }
 
 // Save UTF-8 text back to a file. Local writes go through the hardened Electron

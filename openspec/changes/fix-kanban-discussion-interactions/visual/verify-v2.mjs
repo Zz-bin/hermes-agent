@@ -1,0 +1,53 @@
+import {chromium} from '/home/capz/worktrees/hermes-kanban-detail/node_modules/playwright/index.mjs'
+import {writeFile,readFile} from 'node:fs/promises'
+const root=new URL('../',import.meta.url).pathname
+const browser=await chromium.launch({headless:true,executablePath:'/opt/google/chrome/chrome'})
+const page=await browser.newPage({viewport:{width:1200,height:900}})
+const errors=[];page.on('pageerror',e=>errors.push(e.message))
+const results={fixture:'standalone synthetic design; not product E2E',checks:[],errors}
+function check(name,ok,details){results.checks.push({name,ok,details});if(!ok)throw Error(name)}
+try{
+await page.goto('file://'+root+'visual/interaction-v2.html')
+await page.screenshot({path:root+'visual/v2-wide-entry.png'})
+const assigneeBox=await page.locator('#assignee').boundingBox(),statusBox=await page.locator('#demoStatus').boundingBox();check('处理人在页头状态前',assigneeBox.x<statusBox.x&&Math.abs(assigneeBox.y-statusBox.y)<5);check('右栏无重复处理人控件',await page.locator('aside #assignee').count()===0);
+await page.locator('#tocTrigger').hover();await page.waitForTimeout(160);check('右侧悬停目录展开有有限动画',await page.locator('#tocPanel').evaluate(e=>getComputedStyle(e).opacity==='1'&&getComputedStyle(e).transitionDuration.includes('0.12s')));check('目录来自稳定原编号',await page.locator('[data-toc="101"]').count()===1);await page.mouse.move(10,10);await page.waitForTimeout(160);check('离开后目录收起且不截获输入',await page.locator('#tocPanel').evaluate(e=>getComputedStyle(e).visibility==='hidden'&&getComputedStyle(e).pointerEvents==='none'));
+const row=page.locator('[data-id="108"]');const body=row.locator('.body')
+const before=await body.evaluate(e=>e.clientHeight)
+await row.locator('[data-toggle]').click();const after=await body.evaluate(e=>e.clientHeight)
+check('真实高度变化',after>before,{before,after})
+await row.locator('[data-select]').click();await row.locator('[data-toggle]').click()
+check('选中仍可收起',await row.locator('[data-toggle]').getAttribute('aria-expanded')==='false')
+check('其他楼层独立',await page.locator('[data-id="107"] [data-toggle]').getAttribute('aria-expanded')==='false')
+await page.mouse.move(10,10);await page.locator('#tocTrigger').hover();await page.locator('#jump').fill('101');await page.locator('#go').click()
+check('跳转展开且聚焦但不改选择',await page.locator('[data-id="101"] [data-toggle]').getAttribute('aria-expanded')==='true'&&await page.evaluate(()=>document.activeElement?.dataset.id==='101')&&await page.locator('[data-id="108"]').getAttribute('class').then(c=>c.includes('selected')))
+await page.locator('#author').selectOption('builder');await page.mouse.move(10,10);await page.locator('#tocTrigger').hover();await page.locator('#jump').fill('108');await page.locator('#go').click();check('隐藏目标确认',await page.locator('#confirm').evaluate(e=>e.open));await page.locator('#cancelConfirm').click();check('取消保留筛选',await page.locator('#author').inputValue()==='builder');await page.mouse.move(10,10);await page.locator('#tocTrigger').hover();await page.locator('#go').click();await page.locator('#acceptConfirm').click();check('显示全部再定位',await page.locator('#author').inputValue()==='')
+await page.locator('#order').selectOption('oldest');check('排序不重编号',(await page.locator('.number').allTextContents()).join(',')==='#101,#102,#103,#104,#105,#106,#107,#108')
+await page.mouse.move(10,10);await page.locator('#tocTrigger').hover();await page.locator('#jump').fill('999');await page.locator('#go').click();check('无目标可恢复',(await page.locator('#feedback').textContent()).includes('没有 #999'))
+await page.locator('#wideComposer .grow').click();await page.locator('#scroll').evaluate(e=>e.scrollTop=e.scrollHeight)
+const last=await page.locator('[data-id="108"]').boundingBox();const composer=await page.locator('#wideComposer').boundingBox();check('宽屏增高末层不遮挡',last.y+last.height<=composer.y+1,{last,composer});await page.screenshot({path:root+'visual/v2-wide.png'})
+let downloads=0;page.on('download',()=>downloads++)
+await page.locator('[data-file="说明.md"]').last().click();check('文件名称打开而非保存',await page.locator('#preview').evaluate(e=>e.open)&&downloads===0)
+await page.locator('#failPreview').click();await page.locator('#retryPreview').click();check('预览失败重试',(await page.locator('#previewBody').textContent()).includes('模拟说明'))
+await page.locator('#closePreview').click();const download=page.waitForEvent('download');await page.locator('[data-save="说明.md"]').last().click();await download;check('独立保存',downloads===1)
+await page.locator('[data-file="页面.html"]').click();check('HTML预览无脚本沙箱',await page.locator('#previewBody iframe').getAttribute('sandbox')==='');await page.locator('#closePreview').click()
+await page.locator('#demoStatus').selectOption('running');await page.locator('#assignee').selectOption('reviewer');await page.locator('#cancelConfirm').click();check('分配取消不改处理人',await page.locator('#assignee').inputValue()==='builder');await page.locator('#assignee').selectOption('reviewer');await page.locator('#acceptConfirm').click();check('明确确认分配',await page.locator('#assignee').inputValue()==='reviewer')
+await page.setViewportSize({width:640,height:800});await page.locator('.columns').evaluate(e=>e.scrollTop=e.scrollHeight)
+await page.locator('#narrowComposer textarea').evaluate(e=>e.style.height='42px')
+await page.locator('.columns').evaluate(e=>e.scrollTop=e.scrollHeight)
+const aside=await page.locator('aside').boundingBox();const narrow=await page.locator('#narrowComposer').boundingBox();check('窄屏全部末尾内容不遮挡',aside.y+aside.height<=narrow.y+1&&narrow.y+narrow.height<=800,{aside,narrow})
+await page.locator('#narrowComposer .grow').click();await page.locator('.columns').evaluate(e=>e.scrollTop=e.scrollHeight);const a2=await page.locator('aside').boundingBox();const n2=await page.locator('#narrowComposer').boundingBox();check('窄屏增高仍不遮挡',a2.y+a2.height<=n2.y+1,{aside:a2,composer:n2})
+check('窄屏无横溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))
+await page.screenshot({path:root+'visual/v2-narrow.png'});await page.locator('#theme').click();await page.screenshot({path:root+'visual/v2-narrow-dark.png'});check('无运行错误',errors.length===0)
+await page.locator('.columns').evaluate(e=>e.scrollTop=0);await page.screenshot({path:root+'visual/v2-narrow-entry.png'})
+await page.setViewportSize({width:1200,height:900});const editor=page.locator('#wideComposer textarea');await editor.fill('图片说明');
+await editor.evaluate(e=>{const d=new DataTransfer();d.items.add(new File(['<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80"><rect width="120" height="80" fill="blue"/></svg>'],'粘贴测试.svg',{type:'image/svg+xml'}));e.dispatchEvent(new ClipboardEvent('paste',{clipboardData:d,bubbles:true,cancelable:true}))});await page.waitForFunction(()=>document.querySelectorAll('#wideComposer .image-chip').length===1);check('剪贴板图片成为待发送缩略图且不重复',await page.locator('#wideComposer .image-chip').count()===1&&await editor.inputValue()==='图片说明');
+await page.locator('#wideComposer .fail-upload').check();await page.locator('#wideComposer .sendButton').click();check('失败保留草稿与图片',await editor.inputValue()==='图片说明'&&await page.locator('#wideComposer .image-chip').count()===1&&await page.locator('[data-id="109"]').count()===0);await page.locator('#wideComposer .fail-upload').uncheck();await page.locator('#wideComposer .sendButton').click();check('重试成功显示图片且清空',await page.locator('[data-id="109"] img').count()===1&&await editor.inputValue()===''&&await page.locator('#wideComposer .image-chip').count()===0);
+await page.locator('#wideComposer .demo-image').click();await page.waitForFunction(()=>document.querySelectorAll('#wideComposer .image-chip').length===1);await page.locator('#wideComposer .image-chip button').click();check('发表前可移除且图片空草稿不可发表',await page.locator('#wideComposer .sendButton').isDisabled());
+await page.locator('#tocTrigger').focus();await page.keyboard.press('Enter');await page.locator('[data-toc="101"]').focus();await page.keyboard.press('Enter');check('目录键盘定位焦点',await page.evaluate(()=>document.activeElement?.dataset.id==='101'));
+await page.emulateMedia({reducedMotion:'reduce'});await page.locator('#tocTrigger').hover();check('减少动态效果停止目录位移动画',await page.locator('#tocPanel').evaluate(e=>getComputedStyle(e).transitionDuration==='0s'));await page.emulateMedia({reducedMotion:'no-preference'});
+await page.setViewportSize({width:390,height:800});await page.locator('#narrowComposer .demo-image').click();await page.waitForFunction(()=>document.querySelectorAll('#narrowComposer .image-chip').length===1);await page.locator('#narrowComposer textarea').evaluate(e=>e.style.height='42px');await page.locator('#narrowComposer .grow').click();await page.locator('.columns').evaluate(e=>e.scrollTop=e.scrollHeight);const bottom=await page.locator('aside').boundingBox(),comp=await page.locator('#narrowComposer').boundingBox();check('390px图片加高编辑器末尾不遮挡',bottom.y+bottom.height<=comp.y+1&&comp.y+comp.height<=800&&await page.locator('#narrowComposer textarea').evaluate(e=>e.clientHeight)>=138);check('390px无横向溢出',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:root+'visual/v2-paste-narrow.png'});check('新增交互无运行错误',errors.length===0);
+await page.locator('#tocTrigger').focus();await page.keyboard.press('Enter');await page.keyboard.press('Escape');check('Esc只关闭目录并返回入口',await page.locator('#tocTrigger').getAttribute('aria-expanded')==='false'&&await page.evaluate(()=>document.activeElement.id==='tocTrigger'));await page.locator('#tocTrigger').click();await page.locator('[data-toc="108"]').click();const targetBox=await page.locator('[data-id="108"] .floor-head').boundingBox(),headerBox=await page.locator('header').boundingBox(),composerBox=await page.locator('#narrowComposer').boundingBox();check('窄屏点击目录目标头部可见',targetBox.y>=headerBox.y+headerBox.height-1&&targetBox.y+targetBox.height<=composerBox.y);
+await page.setViewportSize({width:1200,height:900});await page.locator('#tocTrigger').hover();await page.waitForTimeout(160);await page.screenshot({path:root+'visual/v2-toc-wide.png'});
+}catch(e){results.failure=e.message;console.error(e);if(!page.isClosed())await page.screenshot({path:root+'visual/v2-failure.png'}).catch(error=>console.error(error.message))}
+await writeFile(root+'visual/v2-results.json',JSON.stringify(results,null,2))
+await browser.close();console.log(JSON.stringify(results));if(results.failure)process.exitCode=1

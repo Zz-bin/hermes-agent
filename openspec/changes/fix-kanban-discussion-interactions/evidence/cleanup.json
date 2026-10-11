@@ -1,0 +1,17 @@
+{
+  "stopped_validation_pids": [
+    2385944,
+    2416319,
+    2416331
+  ],
+  "validation_ports": [
+    43311,
+    43312,
+    43313
+  ],
+  "original_processes_unchanged": {
+    "1378918": 1791655655.28,
+    "1379337": 1791655656.39
+  },
+  "production_restart": false
+}

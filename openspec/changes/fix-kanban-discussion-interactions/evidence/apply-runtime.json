@@ -1,0 +1,99 @@
+{
+  "changeName": "fix-kanban-discussion-interactions",
+  "changeDir": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions",
+  "schemaName": "spec-driven",
+  "contextFiles": {
+    "proposal": [
+      "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/proposal.md"
+    ],
+    "specs": [
+      "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/specs/kanban-attachment-access/spec.md",
+      "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/specs/kanban-detail-inspection/spec.md",
+      "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/specs/kanban-task-assignment/spec.md"
+    ],
+    "design": [
+      "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/design.md"
+    ],
+    "tasks": [
+      "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md"
+    ]
+  },
+  "progress": {
+    "total": 9,
+    "complete": 2,
+    "remaining": 7
+  },
+  "tasks": [
+    {
+      "id": "1",
+      "description": "1.1 记录主卡用户评论 created_at=1791692429 的第三版方案/视觉/实施批准，核实原版换人链路；验证 approval.md 含原文、api.ts reclaim_first=true 与后端先回收后分配的源码依据，不将其当成真实运行验收。",
+      "done": true,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 5
+    },
+    {
+      "id": "2",
+      "description": "1.2 核实用户实际客户端主机/平台/安装版本、连接方式、后端主机/版本，比较保留Mac树额外预览修复，明确兼容验证目标；验证证据文件有实际来源而非保留树推测。若用户允许先开发后核对，先持久记录该前置条件调整和仍需真实端验收的边界，再继续，不自行豁免。",
+      "done": true,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 6
+    },
+    {
+      "id": "3",
+      "description": "2.1 扩展最窄现有预览读取边界并让全部附件/交接材料共享只读打开和独立保存入口；验证图片、真实PDF、文本/Markdown、安全HTML、未知二进制、超限/无路径/不存在/权限/断线，以及保存完成/取消/失败，名称点击不保存；在本组同步组件行为测试、全部现有语言的文案和安全说明。",
+      "done": false,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 10
+    },
+    {
+      "id": "4",
+      "description": "2.2 验证实际认证读取链路的连接 local→remote→local、身份 A→B→A 与过期响应，保证旧附件不读新来源同名路径；用隔离后端与真实读取路径记录来源结果，模拟适配器结果与真实设备未验证项分别标明。",
+      "done": false,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 11
+    },
+    {
+      "id": "5",
+      "description": "3.1 将单实例发表区移出正文滚动区，保持页签、草稿与窄屏属性顺序；修复独立折叠及隐藏链接焦点，加强原ID头部/边界且不改上下文选择逻辑；本组增加相关drawer/comment-thread行为测试、文案并验证富文本长短内容、编辑器增高、宽/窄/低窗口末楼不遮挡、选中后收起、键盘与原上下文回归。",
+      "done": false,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 15
+    },
+    {
+      "id": "6",
+      "description": "3.2 按批准第三版实现讨论左侧短横线目录、当前阅读标记、悬停摘要/有限动画、点击/键盘、隐藏目标确认与原ID定位；本组增加行为测试及必要文案，验证排序过滤不重新编号、定位展开/聚焦但不选上下文、取消/不存在、空/巨大目录、减少动态效果、非讨论隐藏及目录不压发表区。",
+      "done": false,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 16
+    },
+    {
+      "id": "7",
+      "description": "4.1 将现有当前处理人菜单放到左上状态控件之前，移除右栏重复编辑入口，沿用原版重新分配状态规则；本组补充菜单行为测试和文案，验证运行中确认/取消、同人无操作、名单加载/空/失败、pending/权限/冲突及成功读回，历史快照不变；不新增预约下一阶段字段。",
+      "done": false,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 20
+    },
+    {
+      "id": "8",
+      "description": "4.2 复用剪贴板图片提取与附件上传，在评论草稿暂存可移除图片，使用同卡附件ID引用和固定来源读取；本组补充图片评论行为测试与文案，验证普通文字粘贴、重复载荷去重、纯图/图文发送、移除不上传、部分上传成功重试不重传、发表成功后排队失败只重试排队，以及超时/换卡/换来源后原来源核对再人工重试；不得扩大到全局聊天媒体解析或用交接快照冒充普通评论。",
+      "done": false,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 21
+    },
+    {
+      "id": "9",
+      "description": "5.1 在隔离HERMES_KANBAN_HOME与绝对HERMES_KANBAN_DB、清除继承board并初始化前断言路径的环境，验证真实API到原生详情的附件/评论图片/分配和所有交互；运行相关定向测试、类型检查与相关lint，映射规格验收场景并注明实际Mac/Windows/系统剪贴板与性能因果未验证项，不将设计稿或单平台模拟当产品验收；记录准确待审提交和交付材料，交reviewer，不合并/部署/同步归档。",
+      "done": false,
+      "sourcePath": "/home/capz/worktrees/hermes-kanban-detail/openspec/changes/fix-kanban-discussion-interactions/tasks.md",
+      "line": 25
+    }
+  ],
+  "taskTrackingConfigured": true,
+  "state": "ready",
+  "instruction": "Read context files, work through pending tasks, mark complete as you go.\nPause if you hit blockers or need clarification.",
+  "context": "Language: zh-CN\nAll artifacts must be written in zh-CN.\nKeep OpenSpec structural headings and SHALL/MUST keywords in English.\n",
+  "root": {
+    "path": "/home/capz/worktrees/hermes-kanban-detail",
+    "source": "nearest"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "fixtureRoot": "/home/capz/.hermes/profiles/builder/cache/scratch/kanban-interactions-532e415b-z3",
+  "ids": {
+    "empty": "t_893f4dc2",
+    "large": "t_6c541b94"
+  },
+  "checks": [
+    "empty actual discussion shows an honest empty state without ghost directory targets",
+    "all 240 real floors retain their original identifiers",
+    "keyboard opening focuses the direct original-ID input even with a large directory",
+    "reduced-motion menu has no animation",
+    "nonexistent original ID leaves all floors unselected",
+    "Escape closes only the directory and returns focus without closing the drawer",
+    "large directory keyboard jump locates the original final floor without selecting context"
+  ]
+}

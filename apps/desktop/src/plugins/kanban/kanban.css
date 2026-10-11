@@ -46,6 +46,48 @@
 }
 
 /* Stack the native columns only when space is scarce. */
+.kanban-floor-directory {
+  position: sticky;
+  top: 0.5rem;
+  align-self: flex-start;
+  width: 1.5rem;
+  flex-shrink: 0;
+}
+.kanban-floor-lines {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.kanban-floor-line {
+  display: flex;
+  align-items: center;
+  height: 12px;
+  width: 100%;
+}
+.kanban-floor-line span {
+  height: 2px;
+  width: 10px;
+  background: var(--ui-stroke-primary);
+  transition: width 120ms ease;
+}
+.kanban-floor-line[aria-current] span {
+  width: 18px;
+  background: var(--ui-accent);
+}
+.kanban-floor[data-located]:focus {
+  outline: 1px solid var(--ui-accent);
+  outline-offset: 3px;
+}
+.kanban-floor-menu {
+  animation-duration: 120ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kanban-floor-line span {
+    transition: none;
+  }
+  .kanban-floor-menu {
+    animation: none;
+  }
+}
 @media (max-width: 700px) {
   .kanban-detail-columns {
     flex-direction: column;

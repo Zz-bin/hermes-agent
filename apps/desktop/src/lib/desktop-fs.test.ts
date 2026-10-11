@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { setApiRequestConnection } from '@/api/client'
+import { setApiRequestConnection, setApiRequestProfile } from '@/api/client'
 import { $connection } from '@/store/session'
 
 import {
+  captureGatewayFileReader,
   createRemoteDir,
   desktopDefaultCwd,
   desktopFileDiff,
@@ -73,6 +74,7 @@ describe('desktop filesystem facade', () => {
     stubBridge()
     $connection.set(null)
     setApiRequestConnection(null)
+    setApiRequestProfile(null)
   })
 
   afterEach(() => {
@@ -81,6 +83,46 @@ describe('desktop filesystem facade', () => {
     $connection.set(null)
     setApiRequestConnection(null)
     setDesktopFsRemotePicker(null)
+    setApiRequestProfile(null)
+  })
+
+  it('pins backend material reads through local → remote → local and identity A → B → A', async () => {
+    setApiRequestConnection('local')
+    setApiRequestProfile('A')
+    const original = captureGatewayFileReader()
+
+    for (const [connection, profile] of [
+      ['local', 'A'],
+      ['remote', 'B'],
+      ['local', 'A']
+    ]) {
+      setApiRequestConnection(connection)
+      setApiRequestProfile(profile)
+      await original.readText('/same/material.md')
+      expect(api).toHaveBeenLastCalledWith({
+        path: '/api/fs/read-text?path=%2Fsame%2Fmaterial.md',
+        connectionId: 'local',
+        profile: 'A'
+      })
+    }
+
+    expect(readFileText).not.toHaveBeenCalled()
+  })
+
+  it('does not fall back to client storage after the original backend rejects a material', async () => {
+    setApiRequestConnection('original')
+    setApiRequestProfile('A')
+    const original = captureGatewayFileReader()
+    setApiRequestConnection('other')
+    setApiRequestProfile('B')
+    api.mockRejectedValueOnce(new Error('403: Original material denied'))
+    await expect(original.readDataUrl('/private/material.png')).rejects.toThrow('Original material denied')
+    expect(api).toHaveBeenLastCalledWith({
+      path: '/api/fs/read-data-url?path=%2Fprivate%2Fmaterial.png',
+      connectionId: 'original',
+      profile: 'A'
+    })
+    expect(readFileDataUrl).not.toHaveBeenCalled()
   })
 
   it('uses local Electron filesystem methods in local mode', async () => {

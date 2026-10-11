@@ -1,0 +1,16 @@
+Final focused checks, latest implementation:
+22 affected TS/TSX files: npx eslint --fix, exit 0.
+Changed files: npx prettier --write, exit 0.
+npx tsc -p tsconfig.json --noEmit, exit 0.
+npx vitest run --project ui: attachment, assignee-menu, comment-composer, comment-thread, drawer, desktop-fs, media-file-download, text-utils.
+
+ RUN  v4.1.10 /home/capz/worktrees/hermes-kanban-detail/apps/desktop
+
+ Test Files  8 passed (8)
+      Tests  73 passed (73)
+   Start at  15:03:40
+   Duration  9.94s (transform 32.77s, setup 1.55s, import 43.79s, tests 2.60s, environment 3.27s)
+
+Combined command exit_code: 0.
+Final five native probes, openspec strict validation and git diff --check: combined exit_code 0; individual native results retained in native/*-results.json.
+Frontend build: process proc_61259f8a6daf completed, exit_code 0; stdout/stderr in final-build.log. No desktop packaging, installation or restart was performed.

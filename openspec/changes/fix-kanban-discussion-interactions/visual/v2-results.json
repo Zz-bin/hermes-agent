@@ -1,0 +1,196 @@
+{
+  "fixture": "standalone synthetic design; not product E2E",
+  "checks": [
+    {
+      "name": "处理人在页头状态前",
+      "ok": true
+    },
+    {
+      "name": "右栏无重复处理人控件",
+      "ok": true
+    },
+    {
+      "name": "右侧悬停目录展开有有限动画",
+      "ok": true
+    },
+    {
+      "name": "目录来自稳定原编号",
+      "ok": true
+    },
+    {
+      "name": "离开后目录收起且不截获输入",
+      "ok": true
+    },
+    {
+      "name": "真实高度变化",
+      "ok": true,
+      "details": {
+        "before": 72,
+        "after": 459
+      }
+    },
+    {
+      "name": "选中仍可收起",
+      "ok": true
+    },
+    {
+      "name": "其他楼层独立",
+      "ok": true
+    },
+    {
+      "name": "跳转展开且聚焦但不改选择",
+      "ok": true
+    },
+    {
+      "name": "隐藏目标确认",
+      "ok": true
+    },
+    {
+      "name": "取消保留筛选",
+      "ok": true
+    },
+    {
+      "name": "显示全部再定位",
+      "ok": true
+    },
+    {
+      "name": "排序不重编号",
+      "ok": true
+    },
+    {
+      "name": "无目标可恢复",
+      "ok": true
+    },
+    {
+      "name": "宽屏增高末层不遮挡",
+      "ok": true,
+      "details": {
+        "last": {
+          "x": 125,
+          "y": 54.0625,
+          "width": 694,
+          "height": 546.546875
+        },
+        "composer": {
+          "x": 105,
+          "y": 633.40625,
+          "width": 734,
+          "height": 193.59375
+        }
+      }
+    },
+    {
+      "name": "文件名称打开而非保存",
+      "ok": true
+    },
+    {
+      "name": "预览失败重试",
+      "ok": true
+    },
+    {
+      "name": "独立保存",
+      "ok": true
+    },
+    {
+      "name": "HTML预览无脚本沙箱",
+      "ok": true
+    },
+    {
+      "name": "分配取消不改处理人",
+      "ok": true
+    },
+    {
+      "name": "明确确认分配",
+      "ok": true
+    },
+    {
+      "name": "窄屏全部末尾内容不遮挡",
+      "ok": true,
+      "details": {
+        "aside": {
+          "x": 20.203125,
+          "y": 88.921875,
+          "width": 599.59375,
+          "height": 573.890625
+        },
+        "narrow": {
+          "x": 20.203125,
+          "y": 663.40625,
+          "width": 599.59375,
+          "height": 95.59375
+        }
+      }
+    },
+    {
+      "name": "窄屏增高仍不遮挡",
+      "ok": true,
+      "details": {
+        "aside": {
+          "x": 20.203125,
+          "y": -9.078125,
+          "width": 599.59375,
+          "height": 573.890625
+        },
+        "composer": {
+          "x": 20.203125,
+          "y": 565.40625,
+          "width": 599.59375,
+          "height": 193.59375
+        }
+      }
+    },
+    {
+      "name": "窄屏无横溢出",
+      "ok": true
+    },
+    {
+      "name": "无运行错误",
+      "ok": true
+    },
+    {
+      "name": "剪贴板图片成为待发送缩略图且不重复",
+      "ok": true
+    },
+    {
+      "name": "失败保留草稿与图片",
+      "ok": true
+    },
+    {
+      "name": "重试成功显示图片且清空",
+      "ok": true
+    },
+    {
+      "name": "发表前可移除且图片空草稿不可发表",
+      "ok": true
+    },
+    {
+      "name": "目录键盘定位焦点",
+      "ok": true
+    },
+    {
+      "name": "减少动态效果停止目录位移动画",
+      "ok": true
+    },
+    {
+      "name": "390px图片加高编辑器末尾不遮挡",
+      "ok": true
+    },
+    {
+      "name": "390px无横向溢出",
+      "ok": true
+    },
+    {
+      "name": "新增交互无运行错误",
+      "ok": true
+    },
+    {
+      "name": "Esc只关闭目录并返回入口",
+      "ok": true
+    },
+    {
+      "name": "窄屏点击目录目标头部可见",
+      "ok": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,80 @@
+{
+  "groups": {
+    "write-recovery": {
+      "passed": 3,
+      "checks": [
+        "lost comment response is resolved against the real original database without a duplicate POST",
+        "byte-level recovery excludes the first saved image while resolving the second identical image with a lost response",
+        "partial-success manual continuation references both original attachment IDs without re-uploading either image"
+      ]
+    },
+    "recovery": {
+      "passed": 11,
+      "checks": [
+        "closing and reopening retains the original source-scoped draft",
+        "unknown.bin has a safe honest result and no edit or force-preview action",
+        "oversized.txt has a safe honest result and no edit or force-preview action",
+        "missing.txt has a safe honest result and no edit or force-preview action",
+        "denied.txt has a safe honest result and no edit or force-preview action",
+        "failure and unavailable previews never start saving",
+        "late authenticated response cannot replace a different material preview",
+        "current assignee is not a second assignment action",
+        "real reassignment reads back the new assignee",
+        "ordinary assignment is not written as a formal historical handoff",
+        "no renderer script errors on recovery paths"
+      ]
+    },
+    "source": {
+      "passed": 7,
+      "checks": [
+        "both captured readers use real authenticated file routers across local/remote/local and A/B/A",
+        "original local owner sends all its reads only to server A with builder identity",
+        "original remote owner sends all its reads only to server B with reviewer identity",
+        "missing original file fails rather than reading the new owner",
+        "comment committed only to the original database after switching the active source",
+        "both assignment rosters remain bound to their original task owners",
+        "save cancellation remains bound to original owner (Electron save dialog is simulated)"
+      ]
+    },
+    "implementation": {
+      "passed": 20,
+      "checks": [
+        "rich body expands to greater visible height",
+        "selected context remains selectable while collapsed",
+        "collapsed links inert",
+        "directory locates original ID and expands target",
+        "directory does not select located comment",
+        "located target receives focus",
+        "single visible composer with readable scroller 1200x900",
+        "single visible composer with readable scroller 390x800",
+        "single visible composer with readable scroller 640x400",
+        "filename reads real authenticated markdown without saving",
+        "same-source task refresh does not restart an open material reader",
+        "closing material restores focus to its original entry",
+        "HTML sandbox has no permissions",
+        "HTML sanitization removes active and outgoing links",
+        "HTML made no external request",
+        "authenticated PDF bytes reach the native blob iframe",
+        "uploaded image reference decodes in its newly saved ordinary comment",
+        "successful comment clears draft and pending image",
+        "all material reads carry original explicit owner",
+        "no renderer script errors"
+      ]
+    },
+    "edge": {
+      "passed": 7,
+      "checks": [
+        "empty actual discussion shows an honest empty state without ghost directory targets",
+        "all 240 real floors retain their original identifiers",
+        "keyboard opening focuses the direct original-ID input even with a large directory",
+        "reduced-motion menu has no animation",
+        "nonexistent original ID leaves all floors unselected",
+        "Escape closes only the directory and returns focus without closing the drawer",
+        "large directory keyboard jump locates the original final floor without selecting context"
+      ]
+    }
+  },
+  "total_passed": 48,
+  "group_count": 5,
+  "combined_process_exit_code": 0
+}
