@@ -187,7 +187,7 @@ try {
     await close()
   }
   report.passed =
-    report.rounds.length === (flags.interactions === 'true' ? 10 : 5) &&
+    report.rounds.length === 5 + (flags.feeds === 'true' ? 4 : 0) + (flags.interactions === 'true' ? 5 : 0) &&
     report.rounds.every(round => round.failures.length === 0)
 } catch (error) {
   report.error = error.stack
