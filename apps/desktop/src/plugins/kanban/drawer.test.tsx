@@ -45,8 +45,19 @@ const rest = vi.fn(async (path: string, options?: PluginRestOptions): Promise<un
     return { ok: true }
   }
 
-  if (path === '/tasks/t_example') {
-    return detail
+  if (path === '/tasks/t_example' || path.startsWith('/tasks/t_example?')) {
+    const feed = new URL(path, 'http://kanban.test').searchParams.get('feed')
+    const value = detail as KanbanTaskDetail
+
+    return feed
+      ? {
+          ...value,
+          feed_counts: { comments: value.comments.length, events: value.events.length, runs: value.runs.length },
+          comments: feed === 'comments' ? value.comments : [],
+          events: feed === 'activity' ? value.events : [],
+          runs: feed === 'runs' ? value.runs : []
+        }
+      : detail
   }
 
   if (path.startsWith('/tasks/t_example/log?')) {
@@ -252,21 +263,29 @@ describe('task modal dialog', () => {
     expect(await screen.findByText(en.evtMovedTo('?'))).toBeTruthy()
   })
 
-  it('returns to comments when the selected feed disappears after a refresh', async () => {
+  it('requests and mounts only the selected feed, including logs that were initially unknown', async () => {
     detail = { ...legacyDetail, events: [{ id: 1, kind: 'created', payload: null, created_at: 0 }] }
     workerLog = { exists: true, content: 'Worker output', size_bytes: 13, truncated: false }
     openDrawer()
-    fireEvent.click(await screen.findByRole('button', { name: en.workerLog }))
-    expect(screen.getByText('Worker output')).toBeTruthy()
-    await act(async () => {
-      workerLog = { exists: false, content: '', size_bytes: 0, truncated: false }
-      await client.invalidateQueries({ queryKey: logKey('local', '', legacyDetail.task.id) })
-    })
-    expect(await screen.findByRole('button', { name: en.comments(1), pressed: true })).toBeTruthy()
-    expect(screen.getByText(legacyDetail.comments[0].body)).toBeTruthy()
+    expect(await screen.findByText(legacyDetail.comments[0].body)).toBeTruthy()
+    expect(rest.mock.calls.some(([path]) => path.includes('/log?'))).toBe(false)
+    expect(rest.mock.calls.some(([path]) => /feed=(activity|runs)/.test(path))).toBe(false)
+    expect(screen.queryByText('Worker output')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: en.workerLog }))
+    expect(await screen.findByText('Worker output')).toBeTruthy()
+    expect(screen.queryByText(legacyDetail.comments[0].body)).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.activity(1) }))
-    detail = { ...legacyDetail }
-    await act(() => client.invalidateQueries({ queryKey: taskKey('local', '', legacyDetail.task.id) }))
+    expect(await screen.findByText(en.evtCreated('', ''))).toBeTruthy()
+    expect(rest.mock.calls.some(([path]) => path.includes('feed=activity'))).toBe(true)
+    expect(screen.queryByText('Worker output')).toBeNull()
+    const logReads = rest.mock.calls.filter(([path]) => path.includes('/log?')).length
+    await act(() => client.invalidateQueries({ queryKey: logKey('local', '', legacyDetail.task.id) }))
+    expect(rest.mock.calls.filter(([path]) => path.includes('/log?'))).toHaveLength(logReads)
+
+    fireEvent.click(screen.getByRole('button', { name: en.runs(0) }))
+    await waitFor(() => expect(rest.mock.calls.some(([path]) => path.includes('feed=runs'))).toBe(true))
+    fireEvent.click(screen.getByRole('button', { name: en.comments(1) }))
     expect(await screen.findByText(legacyDetail.comments[0].body)).toBeTruthy()
   })
 

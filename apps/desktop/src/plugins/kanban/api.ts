@@ -399,7 +399,7 @@ export const fetchTask = async (id: string) => {
   const reader = sourceReaders.get(capturedReader.key) ?? capturedReader
   sourceReaders.set(reader.key, reader)
   const path = withBoard(`/tasks/${id}`)
-  const detail = await call<KanbanTaskDetail>(path, { owner: reader.owner })
+  const detail = await call<KanbanTaskDetail>(withBoard(`/tasks/${id}`, { feed: 'comments' }), { owner: reader.owner })
 
   const originPath = (suffix: string) => {
     const [base, query] = path.split('?')
@@ -424,6 +424,13 @@ export const fetchTask = async (id: string) => {
 
   return { ...detail, downloadAttachment, reader, actions }
 }
+
+export const fetchTaskFeed = (id: string, feed: 'activity' | 'runs') =>
+  call<KanbanTaskDetail>(withBoard(`/tasks/${id}`, { feed }))
+
+// A task event invalidates its active feed as well as the task's own metadata.
+export const feedKey = (scope: string, slug: string, id: string, feed: string) =>
+  [...taskKey(scope, slug, id), 'feed', feed] as const
 
 export type TaskActions = Awaited<ReturnType<typeof fetchTask>>['actions']
 

@@ -41,8 +41,10 @@ import {
   boardKeyPrefix,
   deleteTask,
   estimateTask,
+  feedKey,
   fetchLog,
   fetchTask,
+  fetchTaskFeed,
   logKey,
   patchTask,
   reclaimTask,
@@ -559,9 +561,7 @@ function LinkChips({
   )
 }
 
-/** The main column's feed: Comments (default) / Activity / Runs / Worker log,
- *  selected Jira-style with a segmented control ("Activity ▸ Show: …"). The
- *  control hides itself when only comments exist — nothing to switch to. */
+/** Only the selected feed owns an active query and mounted content. */
 function FeedTabs({
   detail,
   onSelection,
@@ -579,34 +579,41 @@ function FeedTabs({
   const slug = useValue($boardSlug)
 
   // Log updates should not invalidate description, sidebar and composer rendering.
-  const { data: log } = useQuery({
-    enabled: routedToScope,
+  const {
+    data: log,
+    isPending: logPending,
+    error: logError
+  } = useQuery({
+    enabled: query => selectedTab === 'log' && routedToScope(query),
     queryFn: () => fetchLog(detail.task.id),
     queryKey: logKey(scope, slug, detail.task.id),
     refetchInterval: running ? 3_000 : 15_000
   })
 
-  const hasLog = !!log?.exists && !!log.content
-  const switchable = detail.events.length > 0 || detail.runs.length > 0 || hasLog
+  const {
+    data: feed,
+    isPending,
+    error
+  } = useQuery({
+    enabled: query => (selectedTab === 'activity' || selectedTab === 'runs') && routedToScope(query),
+    queryFn: () => fetchTaskFeed(detail.task.id, selectedTab as 'activity' | 'runs'),
+    queryKey: feedKey(scope, slug, detail.task.id, selectedTab),
+    staleTime: 30_000,
+    refetchInterval: 30_000
+  })
+
+  const counts = detail.feed_counts
+  const events = feed?.events ?? []
+  const runs = feed?.runs ?? []
 
   const tabs = [
-    { id: 'comments' as const, label: k.comments(detail.comments.length) },
-    { id: 'activity' as const, label: k.activity(detail.events.length) },
-    { id: 'runs' as const, label: k.runs(detail.runs.length) },
+    { id: 'comments' as const, label: k.comments(counts?.comments ?? detail.comments.length) },
+    { id: 'activity' as const, label: k.activity(counts?.events ?? detail.events.length) },
+    { id: 'runs' as const, label: k.runs(counts?.runs ?? detail.runs.length) },
     { id: 'log' as const, label: k.workerLog }
-  ].filter(
-    t =>
-      t.id === 'comments' ||
-      (t.id === 'activity' ? detail.events.length > 0 : t.id === 'runs' ? detail.runs.length > 0 : hasLog)
-  )
+  ]
 
-  const tab = tabs.some(option => option.id === selectedTab) ? selectedTab : 'comments'
-
-  useEffect(() => {
-    if (tab !== selectedTab) {
-      setTab(tab)
-    }
-  }, [selectedTab, tab])
+  const tab = selectedTab
 
   const help = (
     <Tip label={running ? k.commentsHelpRunning : k.commentsHelp}>
@@ -617,7 +624,14 @@ function FeedTabs({
   )
 
   const body = (
-    <div className="flex flex-col gap-4">
+    <div
+      aria-busy={tab === 'log' ? logPending : tab === 'comments' ? false : isPending}
+      className="flex flex-col gap-4"
+      data-kanban-feed={tab}
+    >
+      {tab === 'log' && (logError ? <ErrorState title={errText(logError)} /> : logPending && <Loader />)}
+      {(tab === 'activity' || tab === 'runs') &&
+        (error ? <ErrorState title={errText(error)} /> : isPending && <Loader />)}
       {tab === 'comments' && (
         <>
           <CommentThread
@@ -637,9 +651,9 @@ function FeedTabs({
         </>
       )}
       {tab === 'activity' && (
-        <ScrollFade deps={detail.events.length} max="7rem">
+        <ScrollFade deps={events.length} max="7rem">
           <ul className="flex flex-col gap-1">
-            {detail.events.map(event => {
+            {events.map(event => {
               const { detail: extra, label } = eventText(event, k)
 
               return (
@@ -660,7 +674,7 @@ function FeedTabs({
       {tab === 'runs' && (
         <ScrollFade max="11rem">
           <ul className="flex flex-col gap-1.5">
-            {detail.runs.map(run => {
+            {runs.map(run => {
               const failed = ['crashed', 'failed', 'timed_out', 'gave_up'].includes(run.outcome ?? run.status)
 
               return (
@@ -700,16 +714,6 @@ function FeedTabs({
       )}
     </div>
   )
-
-  // With something to switch to, the segmented control IS the heading — a
-  // label above it only repeated the active tab ("Comments · 2" twice).
-  if (!switchable) {
-    return (
-      <Section action={help} label={k.comments(detail.comments.length)}>
-        {body}
-      </Section>
-    )
-  }
 
   return (
     <section className="flex flex-col gap-3">

@@ -21,7 +21,7 @@ from contextlib import closing, contextmanager
 from dataclasses import asdict
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Iterator, Optional
+from typing import Any, Callable, Iterator, Literal, Optional
 
 from fastapi import (
     APIRouter, File, Form, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect, status as http_status)
@@ -368,6 +368,7 @@ async def get_board_endpoint(
 def get_task(
     task_id: str,
     board: Optional[str] = Query(None),
+    feed: Optional[Literal["comments", "activity", "runs"]] = Query(None),
     run_state_type: Optional[str] = Query(None, description="With run_state_name: filter runs by column 'status' or 'outcome'"),
     run_state_name: Optional[str] = Query(None, description="With run_state_type: exact value for that run column")):
     with _board_conn(board) as (board, conn):
@@ -386,15 +387,20 @@ def get_task(
         _attach_diagnostics(task_d, _compute_task_diagnostics(conn, task_ids=[task_id]).get(task_id) or [])
         return {
             "task": task_d,
-            "comments": [asdict(c) for c in kanban_db.list_comments(conn, task_id)],
-            "events": [asdict(e) for e in kanban_db.list_events(conn, task_id)],
+            # Older clients omit feed and retain the complete detail contract.
+            "feed_counts": {
+                name: conn.execute(f"SELECT COUNT(*) FROM {table} WHERE task_id = ?", (task_id,)).fetchone()[0]
+                for name, table in (("comments", "task_comments"), ("events", "task_events"), ("runs", "task_runs"))
+            },
+            "comments": [asdict(c) for c in kanban_db.list_comments(conn, task_id)] if feed in (None, "comments") else [],
+            "events": [asdict(e) for e in kanban_db.list_events(conn, task_id)] if feed in (None, "activity") else [],
             "attachments": [_attachment_dict(a) for a in kanban_db.list_attachments(conn, task_id)],
             "links": links,
             "link_tasks": _link_tasks(conn, links),
             "child_results": [
                 {"id": c.id, "title": c.title, "status": c.status, "latest_summary": child_summaries.get(c.id), "result": c.result}
                 for c in children],
-            "runs": [asdict(r) for r in kanban_db.list_runs(conn, task_id, state_type=run_state_type, state_name=run_state_name)]}
+            "runs": [asdict(r) for r in kanban_db.list_runs(conn, task_id, state_type=run_state_type, state_name=run_state_name)] if feed in (None, "runs") else []}
 
 
 # --- POST /tasks ------------------------------------------------------------

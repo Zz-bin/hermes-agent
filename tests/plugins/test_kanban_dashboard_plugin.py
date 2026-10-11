@@ -195,6 +195,35 @@ def test_task_detail_includes_links_and_events(client):
     # Events exist from creation.
     assert len(data["events"]) >= 1
 
+def test_task_feeds_load_independently(client, monkeypatch):
+    task = client.post("/api/plugins/kanban/tasks", json={"title": "feed budget"}).json()["task"]
+    task_id = task["id"]
+    with kbc.connect() as conn:
+        kb.add_comment(conn, task_id, author="reviewer", body="comment body")
+        conn.execute("UPDATE tasks SET status = 'ready' WHERE id = ?", (task_id,))
+        assert kb.claim_task(conn, task_id) is not None
+    path = f"/api/plugins/kanban/tasks/{task_id}"
+    full = client.get(path).json()
+    reads = []
+    for name in ("comments", "events", "runs"):
+        original = getattr(kb, f"list_{name}")
+        def record(*args, _name=name, _original=original, **kwargs):
+            reads.append(_name)
+            return _original(*args, **kwargs)
+        monkeypatch.setattr(kb, f"list_{name}", record)
+
+    for feed, collection in (("comments", "comments"), ("activity", "events"), ("runs", "runs")):
+        reads.clear()
+        response = client.get(path, params={"feed": feed})
+        assert response.status_code == 200
+        data = response.json()
+        assert reads == [collection]
+        assert data[collection] == full[collection]
+        assert data["feed_counts"] == {name: len(full[name]) for name in ("comments", "events", "runs")}
+        assert all(data[name] == [] for name in ("comments", "events", "runs") if name != collection)
+    assert client.get(path, params={"feed": "unknown"}).status_code == 422
+
+
 # ---------------------------------------------------------------------------
 # PATCH /tasks/:id — status transitions
 # ---------------------------------------------------------------------------

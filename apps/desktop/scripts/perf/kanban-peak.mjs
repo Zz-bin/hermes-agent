@@ -136,6 +136,29 @@ try {
     await close()
     await page.waitForTimeout(1300)
   }
+  if (flags.feeds === 'true') {
+    await open()
+    await page.waitForTimeout(1500)
+    for (const [feed, name] of [
+      ['activity', /^(活动|Activity)/],
+      ['runs', /^(运行|Runs)/],
+      ['log', /^(工作单元日志|Worker log)/],
+      ['comments', /^(评论|Comments)/]
+    ]) {
+      await measure(
+        `feed-${feed}`,
+        async () => {
+          await dialog.getByRole('button', { name }).click()
+          await dialog.locator(`[data-kanban-feed="${feed}"][aria-busy="false"]`).waitFor()
+          if ((await dialog.locator('[data-kanban-feed]').count()) !== 1) throw new Error('More than one feed mounted')
+          if (feed !== 'comments' && (await dialog.locator('[data-comment-id]').count()))
+            throw new Error('Inactive comments remain mounted')
+        },
+        { paintLimit: limits.firstPaintMs }
+      )
+    }
+    await close()
+  }
   if (flags.interactions === 'true') {
     await open()
     await page.waitForTimeout(1500)
