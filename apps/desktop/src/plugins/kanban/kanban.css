@@ -118,6 +118,10 @@
 .kanban-floor-line[data-highlighted] span {
   background: var(--ui-accent);
 }
+.kanban-floor-line[aria-current='location'] span {
+  height: 3px;
+  background: var(--ui-purple);
+}
 .kanban-floor {
   border-left-color: var(--ui-stroke-tertiary);
 }
