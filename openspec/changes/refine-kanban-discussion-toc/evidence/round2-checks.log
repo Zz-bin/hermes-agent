@@ -1,0 +1,12 @@
+Checking formatting...
+All matched files use Prettier code style!
+
+ RUN  v4.1.10 /home/capz/worktrees/hermes-kanban-detail/apps/desktop
+
+
+ Test Files  9 passed (9)
+      Tests  53 passed (53)
+   Start at  19:32:04
+   Duration  9.00s (transform 30.04s, setup 753ms, import 43.48s, tests 2.92s, environment 2.69s)
+
+Change 'refine-kanban-discussion-toc' is valid

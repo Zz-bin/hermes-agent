@@ -1,0 +1,177 @@
+{
+  "kind": "实际TaskDrawer+Chrome原生按键；API隔离，链接显式DOM夹具；非安装端无业务写入",
+  "results": [
+    {
+      "name": "last Space collapse激活保持目标及历史选择",
+      "pass": true,
+      "id": "96",
+      "before": {
+        "scrollTop": 5995,
+        "active": "96",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 5761,
+        "active": "96",
+        "context": "174"
+      },
+      "wasOpen": "true",
+      "open": "false"
+    },
+    {
+      "name": "last Space expand激活保持目标及历史选择",
+      "pass": true,
+      "id": "96",
+      "before": {
+        "scrollTop": 5761,
+        "active": "96",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 5761,
+        "active": "96",
+        "context": "174"
+      },
+      "wasOpen": "false",
+      "open": "true"
+    },
+    {
+      "name": "last Enter collapse激活保持目标及历史选择",
+      "pass": true,
+      "id": "96",
+      "before": {
+        "scrollTop": 5995,
+        "active": "96",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 5761,
+        "active": "96",
+        "context": "174"
+      },
+      "wasOpen": "true",
+      "open": "false"
+    },
+    {
+      "name": "last Enter expand激活保持目标及历史选择",
+      "pass": true,
+      "id": "96",
+      "before": {
+        "scrollTop": 5761,
+        "active": "96",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 5761,
+        "active": "96",
+        "context": "174"
+      },
+      "wasOpen": "false",
+      "open": "true"
+    },
+    {
+      "name": "middle Space collapse激活保持目标及历史选择",
+      "pass": true,
+      "id": "134",
+      "before": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "wasOpen": "true",
+      "open": "false"
+    },
+    {
+      "name": "middle Space expand激活保持目标及历史选择",
+      "pass": true,
+      "id": "134",
+      "before": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "wasOpen": "false",
+      "open": "true"
+    },
+    {
+      "name": "middle Enter collapse激活保持目标及历史选择",
+      "pass": true,
+      "id": "134",
+      "before": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "wasOpen": "true",
+      "open": "false"
+    },
+    {
+      "name": "middle Enter expand激活保持目标及历史选择",
+      "pass": true,
+      "id": "134",
+      "before": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 3210,
+        "active": "134",
+        "context": "174"
+      },
+      "wasOpen": "false",
+      "open": "true"
+    },
+    {
+      "name": "floor Space仍允许原生阅读翻页",
+      "pass": true,
+      "before": {
+        "scrollTop": 140,
+        "active": "174",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 601,
+        "active": "168",
+        "context": "174"
+      }
+    },
+    {
+      "name": "link Space仍允许原生阅读翻页",
+      "pass": true,
+      "before": {
+        "scrollTop": 140,
+        "active": "174",
+        "context": "174"
+      },
+      "after": {
+        "scrollTop": 601,
+        "active": "168",
+        "context": "174"
+      }
+    },
+    {
+      "name": "无页面异常",
+      "pass": true,
+      "errors": []
+    }
+  ],
+  "errors": [],
+  "passed": 11,
+  "total": 11
+}
